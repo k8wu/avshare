@@ -36,7 +36,7 @@ global $config;
 	<h2>Room Settings</h2>
 	<div class="settings-area rooms-specific">
 		<div class="config-item">
-			<select class="rooms-list">
+			<select class="rooms-list" name="rooms-list">
 				<option value="">Select a room...</option>
 				<?php
 				$rooms = Room::get_room_list();
@@ -60,7 +60,7 @@ global $config;
 
 			<div class="config-item">
 				<label for="room-max-users">Maximum Users:</label>
-				<input type="number" name="room-max-users" id="room-url" />
+				<input type="number" name="room-max-users" id="room-max-users" />
 			</div>
 
 			<?php
@@ -87,7 +87,7 @@ global $config;
 
 			<div class="config-item">
 				<label for="room-owner">Room Owner</label>
-				<select class="room-owner">
+				<select class="room-owner" id="room-owner">
 					<option value="">Select a user...</option>
 					<?php foreach($users_filtered as $user_filtered) { ?>
 						<option value="<?php echo $user_filtered['guid']; ?>"><?php echo $user_filtered['name']; ?></option>

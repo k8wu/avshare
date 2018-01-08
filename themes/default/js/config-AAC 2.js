@@ -1,4 +1,4 @@
-function resetAACForm() {
+function resetForm() {
 	// restore the form to sensible defaults
 	$('.aac .user-container').prop('id', '');
 	$('#aac-username').val('').prop('placeholder', 'New user name');
@@ -18,7 +18,7 @@ $(document).ready(function() {
 		// is there a GUID?
 		var guid = $("select[name='user']").val();
 		if(!guid || guid.length == 0) {
-			resetAACForm();
+			resetForm();
 			$('.aac .user-container').addClass('hidden', 500);
 		}
 		else if(guid != 'new') {
@@ -26,12 +26,12 @@ $(document).ready(function() {
 			var parameters = {
 				'guid': guid
 			}
-
+			
 			// post the object to the server
 			$.post('/user/get', parameters, function(data) {
 				// convert the JSON from the server to an object
 				var response = JSON.parse(data);
-
+				
 				// if we had an issue, now is a good time to know
 				if(response.response == 'error') {
 					alert('Error: ' + response.message);
@@ -57,18 +57,18 @@ $(document).ready(function() {
 							return response.last_login;
 						}
 					});
-
+				
 					// unhide the form
 					$('.aac .user-container').prop('id', guid).removeClass('hidden', 500);
 				}
 			});
-
+			
 			// enable the delete button
 			$('.aac .submit-area .delete-user').removeClass('disabled');
 		}
 		else if(guid == 'new') {
 			// magic keyword indicates that we want to create a new user
-			resetAACForm();
+			resetForm();
 			$('.aac .user-container').prop('id', guid);
 			$('.aac .user-container').removeClass('hidden', 500);
 			
@@ -76,7 +76,7 @@ $(document).ready(function() {
 			$('.aac .submit-area .delete-user').addClass('disabled');
 		}
 	});
-
+	
 	// what happens when a user hits the submit button?
 	$('.aac .submit-area .submit').on('click', function() {
 		// validate the input on each text field
@@ -88,7 +88,7 @@ $(document).ready(function() {
 				validated = false;
 			}
 		});
-
+		
 		// if everything is still validated, proceed with the API call
 		if(validated) {
 			if($('.aac .user-container').prop('id') == 'new') {
@@ -110,7 +110,7 @@ $(document).ready(function() {
 					'access_level': $('#aac-access-level').val()
 				}
 			}
-
+	
 			$.post(uri, parameters, function(data) {
 				response = JSON.parse(data);
 				// if we had an issue, now is a good time to know
@@ -126,7 +126,7 @@ $(document).ready(function() {
 			});
 		}
 	});
-
+	
 	// how about the delete button?
 	$('.aac .submit-area .delete-user').on('click', function() {
 		// get the guid of the user that we want to delete
@@ -139,7 +139,7 @@ $(document).ready(function() {
 			var parameters = {
 				'guid': $('.aac .user-container').prop('id')
 			}
-
+			
 			$.post(uri, parameters, function(data) {
 				response = JSON.parse(data);
 				// if we had an issue, now is a good time to know
