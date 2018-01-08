@@ -1,0 +1,294 @@
+body {
+	background: black;
+	color: #E0E0E0;
+	font-family: Helvetica, Arial, sans-serif;
+	width: 900px;
+	margin: auto;
+}
+
+a {
+	color: #DEF;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+a:hover {
+	color: #FFF;
+	text-decoration: underline;
+}
+
+a:visited {
+	color: #4B647F;
+	text-decoration: underline;
+}
+
+
+/* common definitions */
+
+.header, .page-title {
+	background: #234;
+	padding: 1px 8px;
+	margin: 10px 0;
+}
+
+.page-title h3 {
+	text-align: center;
+}
+
+.header .title-and-subtitle {
+	display: inline-block;
+	width: 605px;
+}
+
+.header .user-info {
+	display: inline-block;
+	margin: 5px;
+	padding: 5px;
+	border: 1px solid white;
+	width: 250px;
+}
+
+.header .user-info .user-name {
+	font-weight: bold;
+	color: #FFF;
+}
+
+.body {
+	background: #345;
+	padding: 1px 8px;
+	margin: 10px 0;
+}
+
+.main {
+	background: #AAA;
+	margin: 2px;
+}
+
+.clearfix {
+	clear: both;
+}
+
+.floated-left {
+	float: left;
+}
+
+.floated-right {
+	float: right;
+}
+
+.rounded-edges {
+	border: 1px solid white;
+	border-radius: 7px;
+	box-shadow: 0 0 5px 1px black;
+}
+
+.button {
+	color: #EEE;
+	background: #000;
+	width: 60px;
+	padding: 5px;
+	border: 1px solid white;
+	text-align: center;
+	cursor: pointer;
+}
+
+.disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.hidden {
+	display: none;
+}
+
+.shown {
+	display: initial;
+}
+
+
+/* for the media section of the room page */
+
+.viewport {
+	background: #222;
+	width: 550px;
+	margin: 5px;
+	padding: 2px 0;
+	float: left;
+}
+
+.video {
+	background: #444;
+	width: 535px;
+	height: 300px;
+	margin: auto;
+	border: 1px solid white;
+}
+
+.info-text {
+	line-height: 1em;
+	text-align: center;
+	padding: 20% 0;
+}
+
+.now-playing {
+	display: none;
+	margin: 0;
+	padding: 0;
+}
+
+.now-playing img, .now-playing video {
+	width: 534px;
+	margin: 0;
+	padding: 0;
+}
+
+.controls {
+	background: #333;
+	margin: 5px;
+	padding: 2px;
+}
+
+.controls .instructions {
+	margin: 5px;
+	width: 443px;
+	height: 1.65em;
+}
+
+.controls .button {
+	margin: 5px;
+	font-size: 75%;
+}
+
+.whats-next {
+	width: 555px;
+	height: 95px;
+	padding: 0 5px;
+}
+
+.whats-next .in-queue {
+	margin: 0 18px 0 0;
+	float: left;
+	border: 1px solid white;
+}
+
+.whats-next .in-queue img {
+	width: 165px;
+}
+
+
+/* for the chat section of the room page */
+
+.chat {
+	background: #345;
+	width: 300px;
+	margin: 5px;
+	float: right;
+	font-family: monospace;
+}
+
+.messages {
+	width: 205px;
+	height: 412px;
+	border: 1px solid white;
+	margin: 2px 5px 0 5px;
+	overflow: auto;
+}
+
+.messages p {
+	margin: 5px;
+	font-size: 9pt;
+}
+
+.messages .time {
+	color: #789;
+}
+
+.messages .nick {
+	color: #ABC;
+}
+
+.messages .msg {
+	color: #DEF;
+}
+
+.active-users {
+	width: 75px;
+	height: 412px;
+	border: 1px solid white;
+	margin: 2px 5px 0 0;
+	overflow: auto;
+}
+
+.active-users p {
+	margin: 5px;
+	font-size: 9pt;
+}
+
+.active-users .nick {
+	color: #abc;
+}
+
+.text-input {
+	width: 288px;
+	margin: 5px;
+	border: 1px solid white;
+}
+
+.text-input .chat-msg {
+	font-family: monospace;
+	width: 213px;
+	margin: 5px;
+}
+
+.text-input .button {
+	font-family: Helvetica, Arial, sans-serif;
+	margin: 2px;
+	width: 40px;
+	font-size: 75%;
+}
+
+.footer {
+	background: #123;
+	padding: 1px 8px;
+	margin: 10px 0;
+}
+
+.footer p {
+	font-size: 9px;
+}
+
+
+/* for the login page */
+
+.login-form {
+	margin: 20px auto;
+	width: 270px;
+	padding: 10px;
+	border: 1px solid white;
+}
+
+.login-form .login-banner {
+	text-align: center;
+	text-transform: uppercase;
+}
+
+.login-form label {
+	float: left;
+}
+
+.login-form input {
+	float: right;
+}
+
+.login-form .button {
+	position: relative;
+	left: 105px;
+	margin-top: 10px;
+}
+
+.login-form .status {
+	display: none;
+	color: red;
+	margin: 5px auto 0 auto;
+	text-align: center;
+}

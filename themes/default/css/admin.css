@@ -1,0 +1,199 @@
+/* for the admin page */
+.admin-area {
+	width: 898px;
+	border: 1px solid white;
+	background: #234;
+}
+
+.admin-area .left-side {
+	width: 300px;
+	border: 1px solid white;
+	background: #345;
+	margin: 5px;
+}
+
+.admin-area .left-side .module-list {
+	border: 1px solid white;
+	background: #567;
+	margin: 5px;
+	padding: 5px;
+}
+
+.admin-area .left-side .module-list h1 {
+	text-transform: uppercase;
+	text-align: center;
+	font-size: 1.5em;
+	color: #EEE;
+}
+
+.admin-area .left-side .module-list .button {
+	width: 275px;
+	font-size: 1em;
+}
+
+.admin-area .right-side {
+	width: 574px;
+	border: 1px solid white;
+	background: #456;
+	margin: 5px;
+}
+
+.admin-area .right-side p {
+	margin: 5px;
+}
+
+.admin-area .right-side .module-settings {
+	border: 1px solid white;
+	background: #333;
+	margin: 5px;
+	padding: 5px;
+}
+
+.admin-area .right-side .module-settings h1 {
+	text-transform: uppercase;
+	text-align: center;
+	font-size: 1.5em;
+	color: #CCC;
+}
+
+.admin-area .right-side .module-settings .option {
+	font-size: 1em;
+	margin: 5px;
+}
+
+
+/* AAC specific */
+.aac .users {
+	margin: 5px;
+}
+
+.aac .user-info {
+	border: 1px solid white;
+}
+
+.aac .user-info p {
+	margin: 5px;
+}
+
+.aac .user-info .profile {
+	border: 1px solid gray;
+	margin: 5px;
+	width: 325px;
+}
+
+.aac .user-info .config-item {
+	margin: 2px 5px;
+}
+
+.aac .user-info .config-item label {
+	display: inline-block;
+	float: left;
+	clear: left;
+	text-align: right;
+	width: 160px;
+	margin-right: 5px;
+}
+
+.aac .user-info .config-item input,
+.aac .user-info .config-item select {
+	display: inline-block;
+	float: left;
+}
+
+.aac .user-info .info {
+	border: 1px solid gray;
+	margin: 5px;
+	width: 200px;
+}
+
+.aac .user-info .info-line {
+	margin: 5px;
+	font-size: 0.70em;
+}
+
+.aac .submit-area {
+	padding: 6px 23px 0 0;
+}
+
+.aac .submit-area .button {
+	margin: 0 10px;
+}
+
+.aac .config-item input {
+	border: 1px solid black;
+	margin: 5px 0;
+}
+
+
+/* Admin module specific */
+.admin .settings-area {
+	border: 1px solid white;
+}
+
+.admin .settings-area .config-item {
+	margin: 2px auto;
+}
+
+.admin .settings-area .config-item .label {
+	display: inline-block;
+	text-align: right;
+	width: 100px;
+	margin-right: 5px;
+	font-size: 0.75em;
+}
+
+.admin .settings-area .config-item .input {
+	display: inline-block;
+}
+
+.admin .settings-area .config-item input {
+	width: 300px;
+}
+
+.admin .submit-area {
+	margin: 5px;
+}
+
+
+/* Room module specific */
+
+.room h2 {
+	font-size: 1.15em;
+	text-transform: uppercase;
+	color: #aaa;
+}
+
+.room .settings-area {
+	border: 1px solid white;
+}
+
+.room .config-item {
+	margin: 5px;
+}
+
+.room .submit-area .button {
+	margin: 5px;
+}
+
+.room .room-container {
+	border: 1px solid gray;
+	margin: 5px;
+}
+
+.room .rooms-specific .room-container,
+.room .rooms-specific .submit-area {
+	display: inline-block;
+}
+
+.room .rooms-specific .room-container {
+	width: 300px;
+}
+
+.room .rooms-specific .submit-area {
+	width: 150px;
+	margin: 43px;
+}
+
+.room .rooms-specific .room-container .config-item {
+	text-align: right;
+}
