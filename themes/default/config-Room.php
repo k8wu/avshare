@@ -41,7 +41,7 @@ global $config;
 				<?php
 				$rooms = Room::get_room_list();
 				foreach($rooms as $room) { ?>
-					<option value="<?php echo $room['guid']; ?>"><?php echo $room['name']; ?></option>
+					<option value="<?php echo $room['guid']; ?>"><?php echo $room['room_name']; ?></option>
 				<?php } ?>
 				<option value="create-room">Create new room...</option>
 			</select>
@@ -49,13 +49,13 @@ global $config;
 
 		<div class="room-container">
 			<div class="config-item">
-				<label for="room-title">Title:</label>
-				<input type="text" name="room-title" id="room-title" />
+				<label for="room-name">Room Name:</label>
+				<input type="text" name="room-name" id="room-name" />
 			</div>
 
 			<div class="config-item">
-				<label for="room-url">URL: /room/</label>
-				<input type="text" name="room-url" id="room-url" />
+				<label for="room-uri">URI: /room/</label>
+				<input type="text" name="room-uri" id="room-uri" />
 			</div>
 
 			<div class="config-item">

@@ -1,8 +1,8 @@
 function resetRoomForm() {
 	// restore the form to sensible defaults
 	$('.room .rooms-specific .room-container').prop('id', '');
-	$('#room-title').val('').prop('placeholder', 'New title');
-	$('#room-url').val('').prop('placeholder', 'new_url');
+	$('#room-name').val('').prop('placeholder', 'New Name');
+	$('#room-uri').val('').prop('placeholder', 'new-uri');
    $('#room-max-users').val('').prop('placeholder', $('#room-global-max-users').val());
 	for(i = 0; i < $('#room-owner').length; i++) {
 		$('#room-owner option:eq(' + i + ')').prop('selected', false);
@@ -36,8 +36,8 @@ $(document).ready(function() {
 
             // otherwise, we now have what we need to display the room info
             else {
-               $('#room-title').val(response.name);
-               $('#room-url').val(response.uri);
+               $('#room-name').val(response.room_name);
+               $('#room-uri').val(response.room_uri);
                $('#room-max-users').val(function() {
                   if(response.max_users > 15) {
                      return 15;
@@ -118,7 +118,7 @@ $(document).ready(function() {
 
 		// all fields must validate or else
 		var validated = true;
-		var fields = [ '#room-title', '#room-url', '#room-max-users', '#room-owner' ];
+		var fields = [ '#room-name', '#room-uri', '#room-max-users', '#room-owner' ];
 		fields.forEach(function(element) {
 			if(!$(element).val()) {
 				$(element).css('border', '1px solid #F33');
@@ -129,8 +129,8 @@ $(document).ready(function() {
 		// if everything is still validated, proceed with the API call
 		if(validated) {
 			var parameters = {
-				'room_name': $('#room-title').val(),
-				'uri': $('#room-url').val(),
+				'room_name': $('#room-name').val(),
+				'room_uri': $('#room-uri').val(),
 				'max_users': $('#room-max-users').val(),
 				'owner_guid': $('#room-owner').val()
 			}
@@ -164,7 +164,7 @@ $(document).ready(function() {
 	});
 
 	// put an event listener on the room title field so that it will latch to whatever is in the title field
-	$('#room-title').on('change', function() {
-		$('#room-url').val($(this).val().toLowerCase().replace(/\s/g, '-'));
+	$('#room-name').on('change', function() {
+		$('#room-uri').val($(this).val().toLowerCase().replace(/\s/g, '-'));
 	});
 });

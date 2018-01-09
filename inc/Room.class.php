@@ -15,7 +15,7 @@ if(!class_exists('Common')) {
 class Room extends Module {
 	// private properties
 	protected $guid;
-	protected $uri;
+	protected $room_uri;
 	protected $room_name;
 	protected $max_users;
 	protected $owner_guid;
@@ -78,6 +78,9 @@ class Room extends Module {
 					break;
 				}
 
+				// this will tell us what is going on
+				$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Handling '{$this->secondary}' call");
+
 				// is the caller requesting information on a room?
 				if($this->secondary == 'get-info') {
 					// we need a GUID
@@ -91,7 +94,7 @@ class Room extends Module {
 					}
 					else {
 						// populate the room GUID
-						$this->room_guid = $this->parameters['guid'];
+						$this->guid = $this->parameters['guid'];
 
 						// fill the rest of the room properties
 						$response = $this->get_room_info();
@@ -104,7 +107,7 @@ class Room extends Module {
 							break;
 						}
 						else {
-							$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Room info sent for room with GUID '{$this->room_guid}'");
+							$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Room info sent for room with GUID '{$this->guid}'");
 							$response['response'] = 'ok';
 							$response['message'] = 'Room details successfully retrieved';
 							break;
@@ -113,109 +116,118 @@ class Room extends Module {
 					break;
 				}
 
-				// is this a call to create or delete a room?
-				if($this->secondary == 'create' || $this->secondary == 'delete' || $this->secondary == 'modify') {
+				// is this a call to create a room?
+				if($this->secondary == 'create') {
 					// check for missing parameters
 					$missing = false;
-
-					// required parameters depend on the action requested
-					if($this->secondary == 'create' && (!isset($this->parameters['uri']) || !isset($this->parameters['owner_guid']))) {
-						$missing = true;
-					}
-					else if(($this->secondary == 'create' || $this->secondary == 'delete') && !isset($this->parameters['room_name'])) {
-						$missing = true;
-					}
-
-					// check if anything is missing now
-					if($missing) {
-						$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Missing parameters when trying to {$this->secondary} a room");
+					if(!isset($this->parameters['room_name']) || !isset($this->parameters['uri']) || !isset($this->parameters['owner_guid'])) {
+						$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Parameters missing - creation process aborted");
 						$response = array(
 							'response' => 'error',
-							'message' => 'Missing parameters'
+							'message' => 'One or more parameters missing'
 						);
 						break;
 					}
 
-					// call the appropriate function
+					// check that the function call goes through
+					if(!$this->create_room($this->parameters['room_name'], $this->parameters['uri'], $this->parameters['max_users'], $this->parameters['owner_guid'])) {
+						$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Function call failed");
+						$response = array(
+							'response' => 'error',
+							'message' => 'Function call failed'
+						);
+						break;
+					}
+
+					// getting here means success
+					$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function call successful");
+					$response = array(
+						'response' => 'ok',
+						'message' => 'Function call successful'
+					);
+					break;
+				}
+
+				// is this a call to delete a room?
+				else if($this->secondary == 'delete') {
+					// check for missing parameters
+					$missing = false;
+					if(!isset($this->parameters['guid'])) {
+						$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Parameters missing - deletion process aborted");
+						$response = array(
+							'response' => 'error',
+							'message' => 'One or more parameters missing'
+						);
+						break;
+					}
+
+					// check that the function call goes through
+					if(!$this->delete_room($this->parameters['guid'])) {
+						$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Function call failed");
+						$response = array(
+							'response' => 'error',
+							'message' => 'Function call failed'
+						);
+						break;
+					}
+
+					// getting here means success
+					$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function call successful");
+					$response = array(
+						'response' => 'ok',
+						'message' => 'Function call successful'
+					);
+					break;
+				}
+
+				// or is this a call to modify a room?
+				else if($this->secondary == 'modify') {
+					// we need a GUID, or else things are bad
+					if(!isset($this->parameters['guid'])) {
+						$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "GUID not passed - modification operation aborted");
+						$response = array(
+							'response' => 'error',
+							'message' => 'GUID not passed'
+						);
+						break;
+					}
+
+					// populate the room GUID otherwise
 					else {
-						if($this->secondary == 'create' && !$this->create_room($this->parameters['room_name'], $this->parameters['uri'], $this->parameters['max_users'], $this->parameters['owner_guid'])) {
-							$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Function call failed");
-							$response = array(
-								'response' => 'error',
-								'message' => 'Function call failed'
-							);
-							break;
-						}
-						else if($this->secondary == 'delete' && !$this->delete_room()) {
-							$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Function call failed");
-							$response = array(
-								'response' => 'error',
-								'message' => 'Function call failed'
-							);
-							break;
-						}
-						else if($this->secondary == 'modify') {
-							// for each parameter we receive, we send it to the proper method
-							if(isset($parameters['room_name'])) {
-								if(!$this->modify_room_name($parameters['room_name'])) {
-									$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Failed to modify the room name");
-									$response = array(
-										'response' => 'error',
-										'message' => 'Function call failed'
-									);
-									break;
-								}
-							}
-							else if(isset($parameters['uri'])) {
-								if(!$this->modify_uri($parameters['uri'])) {
-									$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Failed to modify the URI");
-									$response = array(
-										'response' => 'error',
-										'message' => 'Function call failed'
-									);
-									break;
-								}
-							}
-							else if(isset($parameters['max_users'])) {
-								if(!$this->modify_max_users($parameters['max_users'])) {
-									$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Failed to modify the maximum number of users");
-									$response = array(
-										'response' => 'error',
-										'message' => 'Function call failed'
-									);
-									break;
-								}
-							}
-							else if(isset($parameters['owner_guid'])) {
-								if(!$this->modify_owner_guid($parameters['owner_guid'])) {
-									$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Failed to modify the owner GUID");
-									$response = array(
-										'response' => 'error',
-										'message' => 'Function call failed'
-									);
-									break;
-								}
+						$this->guid = $this->parameters['guid'];
+					}
+
+					// for each parameter we receive, send it individually to the method for processing
+					foreach(array('room_name', 'uri', 'max_users', 'owner_guid') as $property) {
+						if(isset($this->parameters[$property])) {
+							if(!$this->modify_room($property, $this->parameters[$property])) {
+								$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Failed to modify '${property}'");
+								$response = array(
+									'response' => 'error',
+									'message' => "Function call failed on ${property}"
+								);
+								break;
 							}
 						}
-						else {
-							$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Call to secondary '{$this->secondary}' successful");
-							$response = array(
-								'response' => 'ok',
-								'message' => 'Call successful'
-							);
-						}
+					}
+
+					// if there is no response yet, it's successful
+					if(!isset($response) || !is_array($response)) {
+						$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function call successful");
+						$response = array(
+							'response' => 'ok',
+							'message' => 'Function call successful'
+						);
+						break;
 					}
 				}
 
 				// otherwise, it's not valid
-				else {
-					$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Invalid secondary term specified");
-					$response = array(
-						'response' => 'error',
-						'message' => 'Invalid term'
-					);
-					break;
-				}
+				$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Invalid secondary term specified");
+				$response = array(
+					'response' => 'error',
+					'message' => 'Invalid term'
+				);
 				break;
 
 			case 'room':
@@ -236,8 +248,8 @@ class Room extends Module {
 				else {
 					// set the instance variables from the query results
 					$this->guid = $result[0]['guid'];
-					$this->uri = $result[0]['uri'];
-					$this->room_name = $result[0]['name'];
+					$this->room_uri = $result[0]['room_uri'];
+					$this->room_name = $result[0]['room_name'];
 					$this->owner_guid = $result[0]['owner_guid'];
 
 					// load the page
@@ -260,14 +272,14 @@ class Room extends Module {
 		}
 
 	// additional functions
-	function create_room($room_name, $uri, $max_users, $owner_guid) {
+	function create_room($room_name, $room_uri, $max_users, $owner_guid) {
 		// log the function call
 		global $logger;
 		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
 
 		// get a GUID and build the query
 		$room_guid = Common::get_guid();
-		$query = "INSERT INTO rooms (name, owner_guid, max_users, uri, guid) VALUES ('${room_name}', '${owner_guid}', '${max_users}', '${uri}', '${room_guid}')";
+		$query = "INSERT INTO rooms (room_name, owner_guid, max_users, room_uri, guid) VALUES ('${room_name}', '${owner_guid}', '${max_users}', '${room_uri}', '${room_guid}')";
 		global $db;
 		if(!$result = $db->query($query)) {
 			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
@@ -276,7 +288,7 @@ class Room extends Module {
 		else {
 			// populate object variables
 			$this->guid = $room_guid;
-			$this->uri = $uri;
+			$this->room_uri = $room_uri;
 			$this->room_name = $room_name;
 			$this->max_users = $max_users;
 			$this->owner_guid = $owner_guid;
@@ -305,68 +317,32 @@ class Room extends Module {
 		}
 	}
 
-	function change_room_name($new_room_name) {
+	function modify_room($property, $new_value) {
 		// log the function call
+		global $logger;
 		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
 
+		// is this even a valid property?
+		if(!in_array($property, array('room_name', 'owner_guid', 'max_users', 'room_uri'))) {
+			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Requested property invalid");
+			return false;
+		}
+
 		// build the database query
-		$query = "UPDATE rooms SET room_name = '${new_room_name}' WHERE guid = '{$this->room_name}'";
+		$query = "UPDATE rooms SET ${property} = '${new_value}' WHERE guid = '{$this->guid}'";
 
 		// execute it
+		global $db;
 		if(!$db->query($query)) {
 			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
 			return false;
 		}
 		else {
 			// update the object instance as well
-			$this->room_name = $new_room_name;
+			$this->$property = $new_value;
 
 			// log the event and finish
-			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Name of room with GUID '{$this->guid}' changed to '{$this->room_name}'");
-			return true;
-		}
-	}
-
-	function change_uri($new_uri) {
-		// log the function call
-		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
-
-		// build the database query
-		$query = "UPDATE rooms SET uri = '${new_uri}' WHERE guid = '{$this->uri}'";
-
-		// execute it
-		if(!$db->query($query)) {
-			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
-			return false;
-		}
-		else {
-			// update the object instance as well
-			$this->uri = $new_uri;
-
-			// log the event and finish
-			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "URI of room with GUID '{$this->guid}' changed to '{$this->uri}'");
-			return true;
-		}
-	}
-
-	function change_room_owner($new_owner_guid) {
-		// log the function call
-		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
-
-		// build the database query
-		$query = "UPDATE rooms SET owner_guid = '${new_owner_guid}' WHERE guid = '{$this->guid}'";
-
-		// execute it
-		if(!$db->query($query)) {
-			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
-			return false;
-		}
-		else {
-			// update the object instance as well
-			$this->owner_guid = $new_owner_guid;
-
-			// log the event and finish
-			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Owner of room with GUID '{$this->guid}' changed to '{$this->owner_guid}'");
+			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Room with GUID '{$this->guid}' modified");
 			return true;
 		}
 	}
@@ -377,7 +353,7 @@ class Room extends Module {
 		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
 
 		// query the database to get the other details necessary
-		$query = "SELECT name, owner_guid, max_users, uri FROM rooms WHERE guid = '{$this->room_guid}' LIMIT 1";
+		$query = "SELECT room_name, owner_guid, max_users, room_uri FROM rooms WHERE guid = '{$this->guid}' LIMIT 1";
 		global $db;
 		$result = $db->query($query);
 
@@ -399,7 +375,7 @@ class Room extends Module {
 		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
 
 		// query the database
-		$query = "SELECT guid, uri, name, max_users, owner_guid FROM rooms ORDER BY name ASC";
+		$query = "SELECT guid, room_uri, room_name, max_users, owner_guid FROM rooms ORDER BY room_name ASC";
 		global $db;
 		$result = $db->query($query);
 
