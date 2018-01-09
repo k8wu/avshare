@@ -17,6 +17,7 @@ class Room extends Module {
 	protected $guid;
 	protected $uri;
 	protected $room_name;
+	protected $max_users;
 	protected $owner_guid;
 
 	// constructor method
@@ -137,7 +138,7 @@ class Room extends Module {
 
 					// call the appropriate function
 					else {
-						if($this->secondary == 'create' && !create_room($parameters['room_name'], $parameters['uri'], $parameters['owner_guid'])) {
+						if($this->secondary == 'create' && !$this->create_room($this->parameters['room_name'], $this->parameters['uri'], $this->parameters['max_users'], $this->parameters['owner_guid'])) {
 							$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Function call failed");
 							$response = array(
 								'response' => 'error',
@@ -145,7 +146,7 @@ class Room extends Module {
 							);
 							break;
 						}
-						else if($this->secondary == 'delete' && !delete_room()) {
+						else if($this->secondary == 'delete' && !$this->delete_room()) {
 							$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Function call failed");
 							$response = array(
 								'response' => 'error',
@@ -175,6 +176,16 @@ class Room extends Module {
 									break;
 								}
 							}
+							else if(isset($parameters['max_users'])) {
+								if(!$this->modify_max_users($parameters['max_users'])) {
+									$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Failed to modify the maximum number of users");
+									$response = array(
+										'response' => 'error',
+										'message' => 'Function call failed'
+									);
+									break;
+								}
+							}
 							else if(isset($parameters['owner_guid'])) {
 								if(!$this->modify_owner_guid($parameters['owner_guid'])) {
 									$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Failed to modify the owner GUID");
@@ -186,12 +197,13 @@ class Room extends Module {
 								}
 							}
 						}
-					}
-
-					// since it will only be XHR requests that call this,
-					// return a response if it exists
-					if(isset($response) && is_array($response)) {
-						echo json_encode($response);
+						else {
+							$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Call to secondary '{$this->secondary}' successful");
+							$response = array(
+								'response' => 'ok',
+								'message' => 'Call successful'
+							);
+						}
 					}
 				}
 
@@ -212,11 +224,11 @@ class Room extends Module {
 				global $db;
 				$result = $db->query($query);
 				if(!isset($result) || !is_array($result)) {
-					$logger->emit($logger::LOGGER_WARN, get_called_class(), __FUNCTION__, "Database query failure");
+					$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
 					return false;
 				}
 				else if(count($result) == 0) {
-					$logger->emit($logger::LOGGER_WARN, get_called_class(), __FUNCTION__, "No room found with URI '{$this->secondary}'");
+					$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "No room found with URI '{$this->secondary}'");
 					return false;
 				}
 
@@ -248,16 +260,17 @@ class Room extends Module {
 		}
 
 	// additional functions
-	function create_room($room_name, $uri, $owner_guid) {
+	function create_room($room_name, $uri, $max_users, $owner_guid) {
 		// log the function call
 		global $logger;
-		$logger->emit($logger::LOGGER_INFO, get_called_class(), __FUNCTION__, "Function called");
+		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
 
 		// get a GUID and build the query
 		$room_guid = Common::get_guid();
-		$query = "INSERT INTO rooms (name, owner_guid, uri, guid) VALUES ('${room_name}', '${owner_guid}', '${uri}', '${room_guid}')";
+		$query = "INSERT INTO rooms (name, owner_guid, max_users, uri, guid) VALUES ('${room_name}', '${owner_guid}', '${max_users}', '${uri}', '${room_guid}')";
+		global $db;
 		if(!$result = $db->query($query)) {
-			$logger->emit($logger::LOGGER_WARN, get_called_class(), __FUNCTION__, "Database query failure");
+			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
 			return false;
 		}
 		else {
@@ -265,6 +278,7 @@ class Room extends Module {
 			$this->guid = $room_guid;
 			$this->uri = $uri;
 			$this->room_name = $room_name;
+			$this->max_users = $max_users;
 			$this->owner_guid = $owner_guid;
 
 			// log this event

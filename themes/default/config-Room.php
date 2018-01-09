@@ -54,7 +54,7 @@ global $config;
 			</div>
 
 			<div class="config-item">
-				<label for="room-url">URL:</label>
+				<label for="room-url">URL: /room/</label>
 				<input type="text" name="room-url" id="room-url" />
 			</div>
 
