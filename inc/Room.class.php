@@ -389,12 +389,30 @@ class Room extends Module {
 		global $logger;
 		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
 
+		// user GUID will be needed in a more accessible form in this function
+		$user_guid = $_SESSION['user_object']->get_guid();
+
+		// database connection will be needed as well
+		global $db;
+
 		// check if the user is already in the room
+		if($this->is_registered()) {
+			// the user is probably logged in elsewhere (i.e. testing/devel), or it's an old session that will be expired at some point
+			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "User already found in the room with GUID '{$this->guid}' - updating last_seen");
+			$current_timestamp = date('Y-m-d H:i:s');
+			$query = "UPDATE users_in_rooms SET last_seen = '${current_timestamp}' WHERE user_guid = '${user_guid}' AND room_guid = '{$this->guid}'";
+			if(!$db->query($query)) {
+				$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Database query failure");
+				return false;
+			}
+			else {
+				return true;
+			}
+		}
 
 		// associate the user with the channel via DB query
-		$user_guid = $_SESSION['user_object']->get_guid();
-		$query = "INSERT INTO users_in_rooms (room_guid, user_guid) VALUES ('{$this->guid}', '${user_guid}')";
-		global $db;
+		$current_timestamp = date('Y-m-d H:i:s');
+		$query = "INSERT INTO users_in_rooms (room_guid, user_guid, last_seen) VALUES ('{$this->guid}', '${user_guid}', '${current_timestamp}')";
 		if(!$db->query($query)) {
 			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
 			return false;

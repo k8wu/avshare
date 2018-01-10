@@ -7,12 +7,12 @@ ini_set('display_errors', 'On');
 define('_APP', true);
 
 // class includes
-require 'inc/Config.class.php';
-require 'inc/Logger.class.php';
-require 'inc/RequestRouter.class.php';
+require_once 'inc/Config.class.php';
+require_once 'inc/Logger.class.php';
+require_once 'inc/RequestRouter.class.php';
 
 // source the configuration
-require 'conf.php';
+require_once 'conf.php';
 
 // set up the logger
 $logger = new Logger($config->logger_level, $config->logger_location);
@@ -29,9 +29,13 @@ $db = new DatabaseHandler(
 );
 $db->connect();
 
+// remove old user/room entries (i.e. if the user lost their Internet connection, or their web browser crashed)
+$query = "DELETE FROM users_in_rooms WHERE UNIX_TIMESTAMP(last_seen) < UNIX_TIMESTAMP() - 30";
+$db->query($query);
+
 // pick up the session if there is one
-require 'inc/Module.class.php';
-require 'inc/AAC.class.php';
+require_once 'inc/Module.class.php';
+require_once 'inc/AAC.class.php';
 if(session_status() == PHP_SESSION_NONE) {
 	session_start();
 	if(isset($_SESSION['user_object'])) {
