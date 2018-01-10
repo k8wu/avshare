@@ -384,6 +384,70 @@ class Room extends Module {
 		}
 	}
 
+	function register_user() {
+		// log the function call
+		global $logger;
+		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
+
+		// check if the user is already in the room
+
+		// associate the user with the channel via DB query
+		$user_guid = $_SESSION['user_object']->get_guid();
+		$query = "INSERT INTO users_in_rooms (room_guid, user_guid) VALUES ('{$this->guid}', '${user_guid}')";
+		global $db;
+		if(!$db->query($query)) {
+			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
+			return false;
+		}
+		else {
+			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "User successfully registered to the room with GUID '{$this->guid}'");
+			return true;
+		}
+	}
+
+	function unregister_user() {
+		// log the function call
+		global $logger;
+		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
+
+		// associate the user with the channel via DB query
+		$user_guid = $_SESSION['user_object']->get_guid();
+		$query = "DELETE FROM users_in_rooms WHERE user_guid = '${user_guid}'";
+		global $db;
+		if(!$db->query($query)) {
+			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
+			return false;
+		}
+		else {
+			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "User successfully unregistered from the room with GUID '{$this->guid}'");
+			return true;
+		}
+	}
+
+	function is_registered() {
+		// log the function call
+		global $logger;
+		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
+
+		// associate the user with the channel via DB query
+		$user_guid = $_SESSION['user_object']->get_guid();
+		$query = "SELECT user_guid FROM users_in_rooms WHERE room_guid = '{$this->guid}'";
+		global $db;
+		$result = $db->query($query);
+		if(!isset($result) || !is_array($result)) {
+			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
+			return false;
+		}
+		else if(count($result) === 0) {
+			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "No user record found in the room with GUID '{$this->guid}'");
+			return false;
+		}
+		else {
+			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "User successfully found in the room with GUID '{$this->guid}'");
+			return true;
+		}
+	}
+
 	// this will most likely only ever be called procedurally
 	static function get_room_list() {
 		// log the function call
