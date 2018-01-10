@@ -247,7 +247,7 @@ class Room extends Module {
 
 			case 'room':
 				// let's see if it exists first
-				$query = "SELECT guid, uri, name, owner_guid FROM rooms WHERE uri = '{$this->secondary}' LIMIT 1";
+				$query = "SELECT guid, room_uri, room_name, owner_guid FROM rooms WHERE room_uri = '{$this->secondary}' LIMIT 1";
 				global $db;
 				$result = $db->query($query);
 				if(!isset($result) || !is_array($result)) {
