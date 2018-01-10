@@ -430,7 +430,7 @@ class Room extends Module {
 
 		// associate the user with the channel via DB query
 		$user_guid = $_SESSION['user_object']->get_guid();
-		$query = "DELETE FROM users_in_rooms WHERE user_guid = '${user_guid}'";
+		$query = "DELETE FROM users_in_rooms WHERE user_guid = '${user_guid}' AND room_guid = '{$this->guid}'";
 		global $db;
 		if(!$db->query($query)) {
 			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
@@ -449,7 +449,7 @@ class Room extends Module {
 
 		// associate the user with the channel via DB query
 		$user_guid = $_SESSION['user_object']->get_guid();
-		$query = "SELECT user_guid FROM users_in_rooms WHERE room_guid = '{$this->guid}'";
+		$query = "SELECT user_guid FROM users_in_rooms WHERE room_guid = '{$this->guid}' AND user_guid = '${user_guid}'";
 		global $db;
 		$result = $db->query($query);
 		if(!isset($result) || !is_array($result)) {

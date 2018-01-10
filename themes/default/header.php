@@ -28,7 +28,7 @@ global $config;
 			</div>
 			<?php if(isset($_SESSION['user_object'])) { ?>
 				<div class="user-info" id="<?php echo $_SESSION['user_object']->get_guid(); ?>">
-					<p>Logged in as: <span class="user-name"><?php echo $_SESSION['user_object']->get_username(); ?></span></p>
+					<p><i class="fa fa-user" aria-hidden="true"></i> <span class="user-name"><?php echo $_SESSION['user_object']->get_username(); ?></span></p>
 					<?php if($_SESSION['user_object']->is_admin()) { ?>
 						<button class="button admin-panel">Admin</button>
 					<?php } ?>

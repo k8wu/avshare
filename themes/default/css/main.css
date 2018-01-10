@@ -38,6 +38,7 @@ a:visited {
 .header .title-and-subtitle {
 	display: inline-block;
 	width: 605px;
+	text-align: left;
 }
 
 .header .user-info {
@@ -46,6 +47,9 @@ a:visited {
 	padding: 5px;
 	border: 1px solid white;
 	width: 250px;
+	position: absolute;
+	top: 25px;
+	text-align: right;
 }
 
 .header .user-info .user-name {
