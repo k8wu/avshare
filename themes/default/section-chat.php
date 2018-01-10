@@ -2,7 +2,7 @@
 // this may not be run directly
 if(!defined('_APP')) die('Cannot be executed directly!');
 ?>
-<div class="chat rounded-edges">
+<div class="chat rounded-edges" id="<?php echo $this->guid; ?>">
 	<div class="messages floated-left">
 		<p>
 			<span class="time">11:03:10 AM</span>
@@ -90,3 +90,4 @@ if(!defined('_APP')) die('Cannot be executed directly!');
 </div>
 <div class="clearfix">
 </div>
+<script src="<?php echo $config->get_theme_uri(); ?>/js/section-chat.js" type="text/javascript"></script>
