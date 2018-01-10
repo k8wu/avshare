@@ -16,7 +16,7 @@ include $config->get_theme_location() . '/header.php';
 		if(!isset($rooms) || !is_array($rooms)) { ?><h2>No rooms defined</h2><?php }
 		else {
 			foreach($rooms as $room) {
-				?><a href="<?php echo $room['room_uri']; ?>">
+				?><a href="/room/<?php echo $room['room_uri']; ?>">
 					<div class="room-box">
 						<div class="name"><?php echo $room['room_name']; ?></div>
 						<div class="users">
