@@ -292,3 +292,44 @@ a:visited {
 	margin: 5px auto 0 auto;
 	text-align: center;
 }
+
+
+/* for the home page */
+
+.home-page a {
+	color: #CDE;
+}
+
+.home-page .room-box {
+	background: #456;
+	border: 1px solid white;
+	display: inline-block;
+	margin: 5px 0 5px 5px;
+	width: 280px;
+	height: 155px;
+}
+
+.home-page .room-box .name {
+	display: inline-block;
+	width: 210px;
+	margin: 5px;
+	font-size: 1.25em;
+	text-align: left;
+}
+
+.home-page .room-box .users {
+	display: inline-block;
+	position: absolute;
+	width: 50px;
+	text-align: right;
+	margin: 5px;
+	font-size: 0.75em;
+}
+
+.home-page .room-box .now-playing {
+	width: 268px;
+	height: 151px;
+	margin: 5px;
+	border: 1px solid white;
+	background: #111;
+}

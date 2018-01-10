@@ -405,4 +405,71 @@ class Room extends Module {
 			return $result;
 		}
 	}
+
+	static function get_global_max_users() {
+		// log the function call
+		global $logger;
+		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
+
+		// query the database to get the other details necessary
+		$query = "SELECT option_value FROM config WHERE option_name = 'room_global_max_users' LIMIT 1";
+		global $db;
+		$result = $db->query($query);
+
+		// hopefully, something came back, but check for that
+		if(!isset($result) || !is_array($result)) {
+			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
+			return false;
+		}
+		else {
+			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Database query success - returning results");
+			return $result[0]['option_value'];
+		}
+	}
+
+	static function get_max_users($guid) {
+		// log the function call
+		global $logger;
+		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
+
+		// query the database to get the other details necessary
+		$query = "SELECT max_users FROM rooms WHERE guid = '${guid}' LIMIT 1";
+		global $db;
+		$result = $db->query($query);
+
+		// hopefully, something came back, but check for that
+		if(!isset($result) || !is_array($result)) {
+			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
+			return false;
+		}
+		else {
+			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Database query success - returning results");
+			return $result[0]['max_users'];
+		}
+	}
+
+	static function get_users($guid) {
+		// log the function call
+		global $logger;
+		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
+
+		// query the database to get the other details necessary
+		$query = "SELECT user_guid FROM users_in_rooms WHERE room_guid = '${guid}'";
+		global $db;
+		$result = $db->query($query);
+
+		// hopefully, something came back, but check for that
+		if(!isset($result)) {
+			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
+			return false;
+		}
+		else if(!is_array($result)) {
+			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Database query returned zero results");
+			return 0;
+		}
+		else {
+			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Database query success - returning results");
+			return count($result);
+		}
+	}
 }

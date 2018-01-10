@@ -17,6 +17,7 @@ global $config;
 			<link rel="stylesheet" href="<?php echo $config->get_theme_uri(); ?>/css/admin.css">
 		<?php } ?>
 		<script src="<?php echo $config->get_theme_uri(); ?>/js/jquery-3.2.1.min.js"></script>
+		<script src="<?php echo $config->get_theme_uri(); ?>/js/fontawesome-all.js"></script>
 		<script src="<?php echo $config->get_theme_uri(); ?>/js/common.js"></script>
 	</head>
 	<body>
