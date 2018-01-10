@@ -1,6 +1,6 @@
 function resetRoomForm() {
 	// restore the form to sensible defaults
-	$('.room .rooms-specific .room-container').prop('id', '');
+	$('.room .rooms-specific').prop('id', '');
 	$('#room-name').val('').prop('placeholder', 'New Name');
 	$('#room-uri').val('').prop('placeholder', 'new-uri');
    $('#room-max-users').val('').prop('placeholder', $('#room-global-max-users').val());
@@ -10,15 +10,26 @@ function resetRoomForm() {
 }
 
 $(document).ready(function() {
+	// disable the delete/submit buttons once we load up
+	$('.room .rooms-specific .submit-area .delete').addClass('disabled');
+	$('.room .rooms-specific .submit-area .submit').addClass('disabled');
+
 	// set up a listener for the room selector
 	$("select[name='rooms-list']").on('change', function() {
       // is there a GUID?
       var guid = $("select[name='rooms-list']").val();
       if(!guid || guid.length == 0) {
          resetRoomForm();
-         $('.room .rooms-specific .room-container').addClass('hidden', 500);
+         $('.room .rooms-specific').addClass('hidden', 500);
+			$('.room .rooms-specific .submit-area .delete').addClass('disabled');
+			$('.room .rooms-specific .submit-area .submit').addClass('disabled');
       }
       else if(guid != 'create-room') {
+			// unhide the form and enable the delete button
+			$('.room .rooms-specific').removeClass('hidden', 500);
+			$('.room .rooms-specific .submit-area .delete').removeClass('disabled');
+			$('.room .rooms-specific .submit-area .submit').removeClass('disabled');
+
          // make an API request for the data
          var parameters = {
             'guid': guid
@@ -50,7 +61,7 @@ $(document).ready(function() {
                   }
                });
                $("#room-owner option[value='" + response.owner_guid + "']").prop('selected', true);
-					$('.room .rooms-specific .room-container').prop('id', guid);
+					$('.room .rooms-specific').prop('id', guid);
             }
          });
       }
@@ -58,7 +69,9 @@ $(document).ready(function() {
       // what if we want to create a room?
       else {
 			resetRoomForm();
-			$('.room .rooms-specific .room-container').prop('id', 'create-room');
+			$('.room .rooms-specific').prop('id', 'create-room').removeClass('hidden');
+			$('.room .rooms-specific .submit-area .submit').removeClass('disabled');
+			$('.room .rooms-specific .submit-area .delete').addClass('disabled');
 		}
    });
 
@@ -108,12 +121,12 @@ $(document).ready(function() {
 	// set up a listener for the Submit button (room specific)
 	$('.room .rooms-specific .submit-area .submit').on('click', function() {
 		// check the ID of the room container
-		var guid = $('.room .rooms-specific .room-container').prop('id');
+		var guid = $('.room .rooms-specific').prop('id');
 
 		// if it doesn't contain any string, reset the room form and re-hide it
 		if(!guid || guid.length == 0) {
 			resetRoomForm();
-			$('.room .rooms-specific .room-container').addClass('hidden', 500);
+			$('.room .rooms-specific').addClass('hidden', 500);
 		}
 
 		// all fields must validate or else
@@ -157,6 +170,31 @@ $(document).ready(function() {
 				// operation was sucessful
 				else {
 					alert("Room was successfully added or modified! Reloading the page.");
+					window.location = '/admin';
+				}
+			});
+		}
+	});
+
+	// there's a delete button, too - might as well use it!
+	$('.room .rooms-specific .submit-area .delete').on('click', function() {
+		// check the ID of the room container
+		var guid = $('.room .rooms-specific').prop('id');
+
+		// if it equals something other than '' or 'create-room', proceed
+		if(guid.length > 0 && guid != 'create-room') {
+			var parameters = {
+				'guid': guid
+			}
+			$.post('/room-admin/delete', parameters, function(data) {
+				response = JSON.parse(data);
+
+				// if we had an issue, now is a good time to know
+				if(response.response == 'error') {
+					alert('Error: ' + response.message);
+				}
+				else {
+					alert("Room was successfully deleted! Reloading the page.");
 					window.location = '/admin';
 				}
 			});

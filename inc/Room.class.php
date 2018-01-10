@@ -119,8 +119,7 @@ class Room extends Module {
 				// is this a call to create a room?
 				if($this->secondary == 'create') {
 					// check for missing parameters
-					$missing = false;
-					if(!isset($this->parameters['room_name']) || !isset($this->parameters['uri']) || !isset($this->parameters['owner_guid'])) {
+					if(!isset($this->parameters['room_name']) || !isset($this->parameters['room_uri']) || !isset($this->parameters['owner_guid'])) {
 						$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Parameters missing - creation process aborted");
 						$response = array(
 							'response' => 'error',
@@ -129,8 +128,21 @@ class Room extends Module {
 						break;
 					}
 
+					// max_users is a special case - should be between 2 and room_global_max_users, and if it isn't (or it doesn't exist), fudge it
+					global $config;
+					$room_global_max_users = $config->get_value('room_global_max_users');
+					if(!isset($this->parameters['max_users'])) {
+						$this->parameters['max_users'] = $room_global_max_users;
+					}
+					else if($this->parameters['max_users'] < 2) {
+						$this->parameters['max_users'] = 2;
+					}
+					else if($this->parameters['max_users'] > $room_global_max_users) {
+						$this->parameters['max_users'] = $room_global_max_users;
+					}
+
 					// check that the function call goes through
-					if(!$this->create_room($this->parameters['room_name'], $this->parameters['uri'], $this->parameters['max_users'], $this->parameters['owner_guid'])) {
+					if(!$this->create_room($this->parameters['room_name'], $this->parameters['room_uri'], $this->parameters['max_users'], $this->parameters['owner_guid'])) {
 						$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Function call failed");
 						$response = array(
 							'response' => 'error',
@@ -153,13 +165,16 @@ class Room extends Module {
 					// check for missing parameters
 					$missing = false;
 					if(!isset($this->parameters['guid'])) {
-						$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Parameters missing - deletion process aborted");
+						$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "GUID not passed - deletion process aborted");
 						$response = array(
 							'response' => 'error',
-							'message' => 'One or more parameters missing'
+							'message' => 'GUID not passed'
 						);
 						break;
 					}
+
+					// populate the room GUID
+					$this->guid = $this->parameters['guid'];
 
 					// check that the function call goes through
 					if(!$this->delete_room($this->parameters['guid'])) {
@@ -306,6 +321,7 @@ class Room extends Module {
 
 		// build the database query and execute it
 		$query = "DELETE FROM rooms WHERE guid = '{$this->guid}'";
+		global $db;
 		if(!$db->query($query)) {
 			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
 			return false;

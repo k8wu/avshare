@@ -34,20 +34,21 @@ global $config;
 		</div>
 	</div>
 	<h2>Room Settings</h2>
-	<div class="settings-area rooms-specific">
-		<div class="config-item">
-			<select class="rooms-list" name="rooms-list">
-				<option value="">Select a room...</option>
-				<?php
-				$rooms = Room::get_room_list();
-				foreach($rooms as $room) { ?>
-					<option value="<?php echo $room['guid']; ?>"><?php echo $room['room_name']; ?></option>
-				<?php } ?>
-				<option value="create-room">Create new room...</option>
-			</select>
-		</div>
 
-		<div class="room-container">
+	<div class="config-item">
+		<select class="rooms-list" name="rooms-list">
+			<option value="">Select a room...</option>
+			<?php
+			$rooms = Room::get_room_list();
+			foreach($rooms as $room) { ?>
+				<option value="<?php echo $room['guid']; ?>"><?php echo $room['room_name']; ?></option>
+			<?php } ?>
+			<option value="create-room">Create new room...</option>
+		</select>
+	</div>
+
+	<div class="settings-area rooms-specific hidden">
+		<div class="room-container hidden">
 			<div class="config-item">
 				<label for="room-name">Room Name:</label>
 				<input type="text" name="room-name" id="room-name" />
