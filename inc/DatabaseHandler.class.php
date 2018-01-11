@@ -13,7 +13,7 @@ class DatabaseHandler {
 	private $pass;
 	private $dbname;
 	private $host;
-   
+
 	// needed for using this class
 	public $connection;
 	private $query_result;
@@ -73,7 +73,7 @@ class DatabaseHandler {
 	public function query($query) {
 		// clear the result array
 		unset($this->query_result);
-		
+
 		// different PHP engines handle this differently
 		if($this->engine == "mysql") {
 			// run the query and catch any errors that result
@@ -101,6 +101,7 @@ class DatabaseHandler {
 				$this->error_message = $this->connection->error;
 				global $logger;
 				$logger->emit($logger::LOGGER_ERROR, __CLASS__, __FUNCTION__, $this->error_message);
+				$logger->emit($logger::LOGGER_ERROR, __CLASS__, __FUNCTION__, "Query failed to execute: ${query}");
 				return false;
 			}
 
@@ -117,7 +118,7 @@ class DatabaseHandler {
 				$result->close();
 			}
 		}
-		
+
 		// log that we executed a query
 		global $logger;
 		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Query executed: ${query}");

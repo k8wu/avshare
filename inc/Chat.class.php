@@ -14,6 +14,7 @@ class Chat extends Module {
 	protected $room_guid;
 	protected $users;
 	protected $messages;
+	protected $last_message_check;
 
 	// required function definition
 	function process_action() {
@@ -33,39 +34,32 @@ class Chat extends Module {
 					);
 					break;
 				}
+				else {
+					$this->room_guid = $this->parameters['room_guid'];
+				}
 
 				// switch on the secondary term
 				switch($this->secondary) {
 					case 'get-messages':
-						if(isset($this->parameters['since'])) {
-							$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Parameter 'since' has been passed");
-							$response = $this->get_messages($this->parameters['since']);
-							if(!isset($response)) {
-								$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "No new messages (the 'since' parameter was passed");
-								$response = array(
-									'response' => 'no_new_messages',
-									'message'=> 'No new messages'
-								);
-								break;
-							}
+						if(!isset($this->parameters['timestamp'])) {
+							$ts = 0;
 						}
 						else {
-							$response = $this->get_messages();
-							if(!isset($response)) {
-								$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "No messages");
-								$response = array(
-									'response' => 'no_messages',
-									'message' =>'No messages'
-								);
-								break;
-							}
-							else {
-								$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Messages successfully retrieved");
-								$response = array(
-									'response' => 'ok'
-								);
-								break;
-							}
+							$ts = $this->parameters['timestamp'];
+						}
+						$response = $this->get_messages($ts);
+						if(!isset($response)) {
+							$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "No messages");
+							$response = array(
+								'response' => 'no_messages',
+								'message' => 'No messages'
+							);
+							break;
+						}
+						else {
+							$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Messages successfully retrieved");
+							$logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Messages: '" . json_encode($response) . "'");
+							break;
 						}
 						break;
 
@@ -81,7 +75,7 @@ class Chat extends Module {
 						}
 
 						// check for message
-						else if(!isset($this->parameters['message']) || strlen($parameters['message'] == 0)) {
+						else if(!isset($this->parameters['message'])) {
 							$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Message parameter missing - cannot send message");
 							$response = array(
 								'response' => 'error',
@@ -102,14 +96,18 @@ class Chat extends Module {
 							}
 							else {
 								$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Message successfully sent");
+								$response = array(
+									'response' => 'ok',
+									'message' => 'Message sent'
+								);
 								break;
 							}
 						}
 						break;
 
 					case 'get-users':
-						$response = $this->get_users();
-						if(!$response) {
+						$response = Room::get_users($this->room_guid);
+						if(!isset($response)) {
 							$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Function call failure - cannot retrieve users for room GUID: '{$this->room_guid}'");
 							$response = array(
 								'response' => 'error',
@@ -120,6 +118,7 @@ class Chat extends Module {
 						else {
 							$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function call successful for room GUID: '{$this->room_guid}'");
 							$response['response'] = 'ok';
+							$logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Response array: '" . json_encode($response) . "'");
 						}
 						break;
 
@@ -174,43 +173,49 @@ class Chat extends Module {
 						}
 						break;
 
+					case 'get-timestamp':
+						$response = array(
+							'response' => 'ok',
+							'message' => $this->get_timestamp()
+						);
+						break;
+
 					default:
 						break;
 				}
 			default:
-				$response = array(
-					'response' => 'error',
-					'message' => 'No function match'
-				);
+				// $response = array(
+				// 	'response' => 'error',
+				// 	'message' => 'No function match'
+				// );
 				break;
 		}
 
 		// if there is an API response, send it now
 		if(isset($response) && is_array($response)) {
-			return json_encode($response);
+			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Returning API response");
+			echo json_encode($response);
+			return true;
 		}
 	}
 
 	// additional functions
-	function get_messages($since = null) {
+	function get_messages($since_timestamp) {
 		// say what we're doing
 		global $logger;
 		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Retrieving messages for room with GUID '{$this->room_guid}'");
 
 		// start building the query
-		$query = "SELECT chat_messages.date_time, users.name AS user_name, chat_messages.message, chat_messages.action FROM chat_messages INNER JOIN users ON chat_messages.user_guid = users.guid WHERE chat_messages.room_guid = '{$this->room_guid}'";
+		$query = "SELECT * FROM (SELECT chat_messages.date_time, users.name AS user_name, chat_messages.message, chat_messages.action FROM chat_messages INNER JOIN users ON chat_messages.user_guid = users.guid WHERE chat_messages.room_guid = '{$this->room_guid}' AND UNIX_TIMESTAMP(date_time) > '${since_timestamp}' ORDER BY date_time DESC";
 
 		// if we just want messages since a certain date/time
-		if(isset($since)) {
+		if($since_timestamp == 0) {
 			// add it to the query
-			$since_timestamp = date('Y-m-d H:i:s', $since);
-			$query .= " AND date_time > '${since_timestamp}' ORDER BY date_time DESC";
+			$query .= " LIMIT 10";
 		}
 
-		// otherwise, it will just grab the latest messages
-		else {
-			$query .= " ORDER BY date_time DESC LIMIT 10";
-		}
+		// finish the query
+		$query .= ") tmp ORDER BY tmp.date_time ASC";
 
 		// execute the query
 		global $db;
@@ -227,6 +232,7 @@ class Chat extends Module {
 		}
 		else {
 			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Messages found for room with GUID '{$this->room_guid}'");
+			$logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Message data: " . json_encode($result));
 			return $result;
 		}
 	}
@@ -247,7 +253,7 @@ class Chat extends Module {
 
 		// build the query
 		$current_timestamp = date('Y-m-d H:i:s');
-		$query = "INSERT INTO chat_messages (date_time, room_guid, user_guid, message, action, private) VALUES (${current_timestamp}, '{$this->room_guid}', '${user_guid}', '${message}', ${action}, ${private})";
+		$query = "INSERT INTO chat_messages (date_time, room_guid, user_guid, message, action, private) VALUES ('${current_timestamp}', '{$this->room_guid}', '${user_guid}', '${message}', '${action}', '${private}')";
 		global $db;
 		if(!$db->query($query)) {
 			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Message not recorded due to database error");
@@ -256,31 +262,6 @@ class Chat extends Module {
 			// log and leave
 			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Message recorded");
 			return true;
-		}
-	}
-
-	function get_users() {
-		// log what we are doing
-		global $logger;
-		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Getting a list of users in the room '{$this->room_guid}'");
-
-		// call out to the database to get the users
-		$query = "SELECT user_guid, user_level FROM rooms WHERE room_guid = '($this->room_guid}' and user_level > 0";
-		global $db;
-		$result = $db->query($query);
-
-		// parse the results
-		if(!isset($results) || !is_array($results)) {
-			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Error retrieving the list of users for room with GUID: '{$this->room_guid}'");
-			return false;
-		}
-		else if(count($results) == 0) {
-			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "No users found in room with GUID: '{$this->room_guid}'");
-			return false;
-		}
-		else {
-			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "User list retrieved for room with GUID: '{$this->room_guid}'");
-			return $result;
 		}
 	}
 
@@ -373,5 +354,13 @@ class Chat extends Module {
 			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Room GUID set:'{$this->room_guid}'");
 			return true;
 		}
+	}
+
+	function get_timestamp() {
+		// log what we are doing
+		global $logger;
+		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
+
+		return time();
 	}
 }
