@@ -228,6 +228,14 @@ class Chat extends Module {
 		// debug
 		$logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Messages found: '" . json_encode($result) . "'");
 
+		// if we got this far, the query didn't error out, so update the "last seen" timestamp for the user (so this acts as a "heartbeat")
+		$current_timestamp = time();
+		$user_guid = $_SESSION['user_object']->get_guid();
+		$query = "UPDATE users_in_rooms SET last_seen = '${current_timestamp}' WHERE user_guid = '${user_guid}' AND room_guid = '{$this->room_guid}'";
+		if($db->query($query)) {
+			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Failed to update last_seen");
+		}
+
 		// if there are no results...
 		if(count($result) == 0) {
 			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "No results for room with GUID '{$this->room_guid}'");
@@ -246,17 +254,39 @@ class Chat extends Module {
 	}
 
 	function send_message($message) {
-		// it'll be easier to work with the user GUID if we do this first
-		$user_guid = $_SESSION['user_object']->get_guid();
-
 		// log what we are doing
 		global $logger;
-		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Processing message send request for user with GUID '${user_guid}' in room with GUID '{$this->room_guid}'");
+		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Processing message send request for room with GUID '{$this->room_guid}'");
 
-		// TODO - check for action
-		$action = false;
+		// check that the user GUID is set (NB: may not always be the GUID of the logged-in user, specifically in cases where action is 'userjoin' or 'userpart')
+		if(!isset($user_guid)) {
+			$user_guid = $_SESSION['user_object']->get_guid();
+		}
 
-		// TODO - determine whether the message should be sent to all users
+		// action handler
+		$logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "/ character is at position: " . strpos($message, '/'));
+		if(strpos($message, '/') === 0) {
+			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Action detected");
+			$message_parts = explode(' ', $message);
+			switch($message_parts[0]) {
+				case '/me':
+					$action = 'action';
+					$message = ltrim($message, $message_parts[0]);
+					break;
+
+				default:
+					$action = 'message';
+					break;
+			}
+		}
+
+		// not an action
+		else {
+			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Action not detected - processing as message");
+			$action = 'message';
+		}
+
+		// TODO - future functionality - determine whether the message should be sent to all users
 		$private = false;
 
 		// build the query
@@ -269,62 +299,6 @@ class Chat extends Module {
 		} else {
 			// log and leave
 			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Message recorded");
-			return true;
-		}
-	}
-
-	function user_join($user_guid) {
-		// log what we are doing
-		global $logger;
-		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "User joining the room with GUID: '{$this->room_guid}'");
-
-		// only allow the login if the user is not banned
-		$query = "SELECT user_level FROM rooms WHERE room_guid = '{$this->room_guid}' AND user_guid = '${user_guid}' AND user_level = 0";
-		global $db;
-		$result = $db->query($query);
-		if(isset($result) && count($result) > 0) {
-			// user is banned - bail
-			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "User with GUID '${user_guid}' prevented from joining room with GUID '{$this->room_guid}' (banned)");
-			return false;
-		}
-		else {
-			// user is cool to join - but are they already here?
-			$query = "SELECT user_guid FROM rooms WHERE room_guid = '{$this->room_guid}' AND user_guid = '${user_guid}'";
-			$result = $db->query($query);
-			if(isset($result) && count($result) > 0) {
-				// user is already here - rejoin session
-				$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "User with GUID '${user_guid}' rejoined session in room with GUID '{$this->room_guid}'");
-				return true;
-			}
-			else {
-				// perform a new join
-				$query = "INSERT INTO rooms (user_guid, room_guid, user_level) VALUES ('${user_guid}', '{$this->room_guid}', 1)";
-				if(!$db->query($query)) {
-					$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database call failed");
-					return false;
-				}
-				else {
-					$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Join successful for user with GUID '${user_guid}' into room with GUID '{$this->room_guid}'");
-					return true;
-				}
-			}
-		}
-	}
-
-	function user_part($user_guid) {
-		// log what we are doing
-		global $logger;
-		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "User leaving the room with GUID: '{$this->room_guid}'");
-
-		// update the database
-		$query = "DELETE FROM rooms WHERE user_guid = '${user_guid}' AND room_guid = '{$this->room_guid}'";
-		global $db;
-		if(!$db->query($query)) {
-			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
-			return false;
-		}
-		else {
-			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "User successfully removed from the room with GUID '{$this->room_guid}'");
 			return true;
 		}
 	}

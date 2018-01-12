@@ -20,9 +20,35 @@ function getMessages() {
             for(var i = 0; i < response.length; i++) {
                messages += '<p>\n';
                messages += '<span class="time">' + response[i].date_time + '</span>\n';
-               messages += '<span class="nick"><i class="fa fa-user" aria-hidden="true"></i> ' + response[i].user_name + '</span>\n';
-               messages += '<span class="msg">' + response[i].message + '</span>\n';
+               switch(response[i].action) {
+                  case 'message':
+                     messages += '<span class="nick"><i class="fa fa-user" aria-hidden="true"></i> ' + response[i].user_name + '</span>\n';
+                     messages += '<span class="msg">' + response[i].message + '</span>\n';
+                     break;
+
+                  case 'userjoin':
+                     var new_user_list = $('.chat .active-users').html() + '<p class="nick" id="user-' + response[i].user_name + '"><i class="fa fa-user" aria-hidden="true"></i> ' + response[i].user_name + '</p>\n';
+                     new_user_list.sort(function(a, b) {
+                        return $(a).data('sid') > $(b).data('sid');
+                     }).html('.chat .active-users');
+
+                     messages += '<span class="msg"><i class="fa fa-user" aria-hidden="true"></i> ' + response[i].user_name + ' has joined the room</span>\n';
+                     break;
+
+                  case 'userpart':
+                     $('#user-' + response[i].user_name).remove();
+                     messages += '<span class="msg"><i class="fa fa-user" aria-hidden="true"></i> ' + response[i].user_name + ' has left the room</span>\n';
+                     break;
+
+                  case 'action':
+                     messages += '<span class="msg">* <i class="fa fa-user" aria-hidden="true"></i>' + response[i].user_name + ' ' + response[i].message + '</span>\n';
+                     break;
+
+                  default:
+                     break;
+               }
                messages += '</p>\n\n';
+
                window.last_id = response[i].id;
             }
 
@@ -50,6 +76,10 @@ function sendMessage(message) {
             else if(response.response == 'ok') {
                $('.chat .text-input .chat-msg').val('');
                getMessages();
+               clearInterval(window.msgCheck);
+               window.msgCheck = setInterval(function() {
+                  getMessages();
+               }, 2000);
             }
          }
       });
@@ -66,9 +96,9 @@ function getActiveUsers() {
       if(data) {
          var response = JSON.parse(data);
          if(response.length > 0) {
+            var users = '';
             for(var i = 0; i < response.length; i++) {
-               var users = '';
-               users += '<p class="nick"><i class="fa fa-user" aria-hidden="true"></i> ' + response[i].user_name + '</p>\n';
+               users += '<p class="nick" id="user-' + response[i].user_name + '"><i class="fa fa-user" aria-hidden="true"></i> ' + response[i].user_name + '</p>\n';
             }
             $('.chat .active-users').html(users);
          }
@@ -99,10 +129,8 @@ $(document).ready(function() {
    });
 
    // get the messages loaded
-   var initMsgCheck = setTimeout(function() {
+   getMessages();
+   window.msgCheck = setInterval(function() {
       getMessages();
-
-      // fire the function every few seconds to check for new messages
-      var msgCheck = setInterval(getMessages, 2000);
-   }, 100);
+   }, 2000);
 });

@@ -4,15 +4,17 @@ if(!defined('_APP')) die('Cannot be executed directly!');
 
 // includes needed
 global $config;
-if(!class_exists('Module')) {
-	require $config->app_base_dir . '/inc/Module.class.php';
-}
-if(!class_exists('Common')) {
-	require $config->app_base_dir . '/inc/Common.class.php';
-}
+require_once $config->app_base_dir . '/inc/Module.class.php';
+require_once $config->app_base_dir . '/inc/Common.class.php';
 
 // class definition
 class Room extends Module {
+	// constants
+	const USER_LEVEL_BANNED = 0;
+	const USER_LEVEL_NORMAL = 1;
+	const USER_LEVEL_MODERATOR = 2;
+	const USER_LEVEL_ADMIN = 3;
+
 	// private properties
 	protected $guid;
 	protected $room_uri;
@@ -416,8 +418,25 @@ class Room extends Module {
 
 		// associate the user with the channel via DB query
 		else {
+			// get UNIX timestamp for the "last seen" field
 			$current_timestamp = time();
-			$query = "INSERT INTO users_in_rooms (room_guid, user_guid, last_seen) VALUES ('{$this->guid}', '${user_guid}', '${current_timestamp}')";
+
+			// if the user is an owner or a site administrator, give them admin level right away
+			$query = "SELECT owner_guid FROM rooms WHERE guid = '{$this->guid}' AND owner_guid = '${user_guid}' LIMIT 1";
+			$result = $db->query($query);
+			$logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Owner GUID " . (isset($result[0]['owner_guid']) ? "found" : "not found"));
+			if(isset($result[0]['owner_guid'])) {
+				$user_level = $this::USER_LEVEL_ADMIN;
+			}
+			else if($_SESSION['user_object']->is_admin()) {
+				$user_level = $this::USER_LEVEL_ADMIN;
+			}
+			else {
+				$user_level = $this::USER_LEVEL_NORMAL;
+			}
+
+			// do the query
+			$query = "INSERT INTO users_in_rooms (room_guid, user_guid, user_level, last_seen) VALUES ('{$this->guid}', '${user_guid}', '${user_level}', '${current_timestamp}')";
 			if(!$db->query($query)) {
 				$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
 				return false;
@@ -455,7 +474,7 @@ class Room extends Module {
 
 		// associate the user with the channel via DB query
 		$user_guid = $_SESSION['user_object']->get_guid();
-		$query = "SELECT user_guid FROM users_in_rooms WHERE room_guid = '{$this->guid}' AND user_guid = '${user_guid}'";
+		$query = "SELECT user_guid FROM users_in_rooms WHERE room_guid = '{$this->guid}' AND user_guid = '${user_guid}' AND user_level > '" . $this::USER_LEVEL_BANNED . "'";
 		global $db;
 		$result = $db->query($query);
 		if(!isset($result) || !isset($result[0]['user_guid'])) {
@@ -539,7 +558,7 @@ class Room extends Module {
 
 		// query the database to get the other details necessary
 		//$query = "SELECT user_guid FROM users_in_rooms WHERE room_guid = '${guid}'";
-		$query = "SELECT users.name AS user_name FROM users_in_rooms INNER JOIN users ON users_in_rooms.user_guid = users.guid WHERE users_in_rooms.room_guid = '${guid}'";
+		$query = "SELECT users.name AS user_name FROM users_in_rooms INNER JOIN users ON users_in_rooms.user_guid = users.guid WHERE users_in_rooms.room_guid = '${guid}' ORDER BY user_name ASC";
 		global $db;
 		$result = $db->query($query);
 
