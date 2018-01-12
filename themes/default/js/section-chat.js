@@ -11,20 +11,21 @@ function getMessages() {
    $.post('/chat/get-messages', parameters, function(data) {
       if(data) {
          var response = JSON.parse(data);
-         console.log(response.length);
          if(response.response == 'error') {
             alert('Error: ' + response.message);
          }
          else if(response.length > 0) {
-            var msg = '';
+            var messages = '';
             for(var i = 0; i < response.length; i++) {
-               msg += '<p>\n';
-               msg += '<span class="time">' + response[i].date_time + '</span>\n';
-               msg += '<span class="nick"><i class="fa fa-user" aria-hidden="true"></i> ' + response[i].user_name + '</span>\n';
-               msg += '<span class="msg">' + response[i].message + '</span>\n';
-               msg += '</p>\n';
-               $('.chat .messages').html($('.chat .messages').val() + msg);
+               messages += '<p>\n';
+               messages += '<span class="time">' + response[i].date_time + '</span>\n';
+               messages += '<span class="nick"><i class="fa fa-user" aria-hidden="true"></i> ' + response[i].user_name + '</span>\n';
+               messages += '<span class="msg">' + response[i].message + '</span>\n';
+               messages += '</p>\n\n';
             }
+
+            // append the messages to the chat window
+            $('.chat .messages').append(messages);
 
             // get a timestamp from the server and save it locally
             var parameters = {
@@ -62,6 +63,7 @@ function sendMessage(message) {
             }
             else if(response.response == 'ok'){
                $('.chat .text-input .chat-msg').val('');
+               getMessages();
             }
          }
       });
@@ -69,6 +71,9 @@ function sendMessage(message) {
 }
 
 $(document).ready(function() {
+   // clear the message area
+   $('.chat .messages').empty();
+   
    // set up an event listener for sending a message
    $('.chat .text-input .send').on('click', function() {
       if($('.chat .text-input .chat-msg').val()) {
@@ -77,12 +82,12 @@ $(document).ready(function() {
    });
 
    // the Enter button will trigger the message send event as well
-   //$('.chat .text-input .chat-msg').keypress(function (e) {
-      //if(e.which == 13) {
-         //$('.chat button .send').trigger('click');
-         //return false;
-      //}
-   //});
+   $('.chat .text-input .chat-msg').keypress(function (e) {
+      if(e.which == 13) {
+         $('.chat .text-input .send').trigger('click');
+         return false;
+      }
+   });
 
    // get the messages loaded
    var initMsgCheck = setTimeout(function() {

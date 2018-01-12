@@ -58,7 +58,6 @@ class Chat extends Module {
 						}
 						else {
 							$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Messages successfully retrieved");
-							$logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Messages: '" . json_encode($response) . "'");
 							break;
 						}
 						break;
@@ -206,16 +205,16 @@ class Chat extends Module {
 		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Retrieving messages for room with GUID '{$this->room_guid}'");
 
 		// start building the query
-		$query = "SELECT * FROM (SELECT chat_messages.date_time, users.name AS user_name, chat_messages.message, chat_messages.action FROM chat_messages INNER JOIN users ON chat_messages.user_guid = users.guid WHERE chat_messages.room_guid = '{$this->room_guid}' AND UNIX_TIMESTAMP(date_time) > '${since_timestamp}' ORDER BY date_time DESC";
+		$query = "SELECT * FROM (SELECT chat_messages.tstamp, users.name AS user_name, chat_messages.message, chat_messages.action FROM chat_messages INNER JOIN users ON chat_messages.user_guid = users.guid WHERE chat_messages.room_guid = '{$this->room_guid}' AND chat_messages.tstamp > ${since_timestamp} ORDER BY chat_messages.tstamp DESC";
 
-		// if we just want messages since a certain date/time
+		// if we just want the last ten messages
 		if($since_timestamp == 0) {
 			// add it to the query
 			$query .= " LIMIT 10";
 		}
 
 		// finish the query
-		$query .= ") tmp ORDER BY tmp.date_time ASC";
+		$query .= ") tmp ORDER BY tmp.tstamp ASC";
 
 		// execute the query
 		global $db;
@@ -225,14 +224,22 @@ class Chat extends Module {
 			return false;
 		}
 
+		// debug
+		$logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Messages found: '" . json_encode($result) . "'");
+
 		// if there are no results...
 		if(count($result) == 0) {
 			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "No results for room with GUID '{$this->room_guid}'");
 			return false;
 		}
 		else {
+			// fix timestamps so that they are displayed in normal time notation
+			for($i = 0; $i < count($result); $i++) {
+				if(isset($result[$i]['tstamp'])) {
+					$result[$i]['date_time'] = date('m/d H:i:s A', $result[$i]['tstamp']);
+				}
+			}
 			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Messages found for room with GUID '{$this->room_guid}'");
-			$logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Message data: " . json_encode($result));
 			return $result;
 		}
 	}
@@ -252,8 +259,8 @@ class Chat extends Module {
 		$private = false;
 
 		// build the query
-		$current_timestamp = date('Y-m-d H:i:s');
-		$query = "INSERT INTO chat_messages (date_time, room_guid, user_guid, message, action, private) VALUES ('${current_timestamp}', '{$this->room_guid}', '${user_guid}', '${message}', '${action}', '${private}')";
+		$current_timestamp = time();
+		$query = "INSERT INTO chat_messages (tstamp, room_guid, user_guid, message, action, private) VALUES ('${current_timestamp}', '{$this->room_guid}', '${user_guid}', '${message}', '${action}', '${private}')";
 		global $db;
 		if(!$db->query($query)) {
 			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Message not recorded due to database error");
