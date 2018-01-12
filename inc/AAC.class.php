@@ -266,7 +266,7 @@ class AAC extends Module {
 						}
 
 						// different functions correspond to different requests
-						if(isset($this->username)) {
+						if(isset($this->parameters['username'])) {
 							$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Attempting to modify username");
 							if(!$this->modify_username($this->parameters['username'])) {
 								$response = array(
@@ -276,7 +276,7 @@ class AAC extends Module {
 								break;
 							}
 						}
-						if(isset($this->password) && $this->password != '*') {
+						if(isset($this->parameters['password'])) {
 							$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Attempting to modify password");
 							$logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Password: '{$this->password}'");
 							if(!$this->modify_password($this->parameters['password'], $this->parameters['guid'])) {
@@ -287,7 +287,7 @@ class AAC extends Module {
 								break;
 							}
 						}
-						if(isset($this->email_address)) {
+						if(isset($this->parameters['email_address'])) {
 							$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Attempting to modify email address");
 							if(!$this->modify_email_address($this->parameters['email_address'], $this->parameters['guid'])) {
 								$response = array(
@@ -297,7 +297,7 @@ class AAC extends Module {
 								break;
 							}
 						}
-						if(isset($this->access_level)) {
+						if(isset($this->parameters['access_level'])) {
 							$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Attempting to modify access level");
 							if(!$this->modify_access_level($this->parameters['access_level'], $this->parameters['guid'])) {
 								$response = array(
