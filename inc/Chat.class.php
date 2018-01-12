@@ -41,13 +41,13 @@ class Chat extends Module {
 				// switch on the secondary term
 				switch($this->secondary) {
 					case 'get-messages':
-						if(!isset($this->parameters['timestamp'])) {
-							$ts = 0;
+						if(!isset($this->parameters['last_id'])) {
+							$last_id = 0;
 						}
 						else {
-							$ts = $this->parameters['timestamp'];
+							$last_id = $this->parameters['last_id'];
 						}
-						$response = $this->get_messages($ts);
+						$response = $this->get_messages($last_id);
 						if(!isset($response)) {
 							$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "No messages");
 							$response = array(
@@ -199,16 +199,16 @@ class Chat extends Module {
 	}
 
 	// additional functions
-	function get_messages($since_timestamp) {
+	function get_messages($since_id) {
 		// say what we're doing
 		global $logger;
 		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Retrieving messages for room with GUID '{$this->room_guid}'");
 
 		// start building the query
-		$query = "SELECT * FROM (SELECT chat_messages.tstamp, users.name AS user_name, chat_messages.message, chat_messages.action FROM chat_messages INNER JOIN users ON chat_messages.user_guid = users.guid WHERE chat_messages.room_guid = '{$this->room_guid}' AND chat_messages.tstamp > ${since_timestamp} ORDER BY chat_messages.tstamp DESC";
+		$query = "SELECT * FROM (SELECT chat_messages.id, chat_messages.tstamp, users.name AS user_name, chat_messages.message, chat_messages.action FROM chat_messages INNER JOIN users ON chat_messages.user_guid = users.guid WHERE chat_messages.room_guid = '{$this->room_guid}' AND chat_messages.id > ${since_id} ORDER BY chat_messages.tstamp DESC";
 
 		// if we just want the last ten messages
-		if($since_timestamp == 0) {
+		if($since_id == 0) {
 			// add it to the query
 			$query .= " LIMIT 10";
 		}
@@ -361,13 +361,5 @@ class Chat extends Module {
 			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Room GUID set:'{$this->room_guid}'");
 			return true;
 		}
-	}
-
-	function get_timestamp() {
-		// log what we are doing
-		global $logger;
-		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
-
-		return time();
 	}
 }

@@ -1,11 +1,11 @@
 // global variable
-window.ts = 0;
+window.last_id = 0;
 
 // get new messages from the server
 function getMessages() {
    var parameters = {}
    parameters.room_guid = $('.chat').prop('id');
-   parameters.timestamp = window.ts;
+   parameters.last_id = window.last_id;
 
    // make the request and get the data
    $.post('/chat/get-messages', parameters, function(data) {
@@ -22,6 +22,7 @@ function getMessages() {
                messages += '<span class="nick"><i class="fa fa-user" aria-hidden="true"></i> ' + response[i].user_name + '</span>\n';
                messages += '<span class="msg">' + response[i].message + '</span>\n';
                messages += '</p>\n\n';
+               window.last_id = response[i].id;
             }
 
             // append the messages to the chat window
@@ -31,17 +32,6 @@ function getMessages() {
             var parameters = {
                'room_guid': $('.chat').prop('id')
             }
-            $.post('/chat/get-timestamp', parameters, function(data) {
-               if(data) {
-                  var response = JSON.parse(data)
-                  if(response.response == 'error') {
-                     alert('Error: ' + response.message);
-                  }
-                  else {
-                     window.ts = response.message;
-                  }
-               }
-            });
          }
       }
    });
@@ -73,7 +63,7 @@ function sendMessage(message) {
 $(document).ready(function() {
    // clear the message area
    $('.chat .messages').empty();
-   
+
    // set up an event listener for sending a message
    $('.chat .text-input .send').on('click', function() {
       if($('.chat .text-input .chat-msg').val()) {
