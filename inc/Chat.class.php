@@ -105,6 +105,8 @@ class Chat extends Module {
 						break;
 
 					case 'get-users':
+						global $config;
+						require_once $config->app_base_dir . '/inc/Room.class.php';
 						$response = Room::get_users($this->room_guid);
 						if(!isset($response)) {
 							$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Function call failure - cannot retrieve users for room GUID: '{$this->room_guid}'");
@@ -116,7 +118,6 @@ class Chat extends Module {
 						}
 						else {
 							$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function call successful for room GUID: '{$this->room_guid}'");
-							$response['response'] = 'ok';
 							$logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Response array: '" . json_encode($response) . "'");
 						}
 						break;

@@ -21,7 +21,7 @@ include $config->get_theme_location() . '/header.php';
 						<div class="name"><?php echo $room['room_name']; ?></div>
 						<div class="users">
 							<i class="fa fa-user" aria-hidden="true"></i>
-							<span class="current-users"><?php echo Room::get_users($room['guid']); ?></span> / <span class="max-users"><?php echo Room::get_max_users($room['guid']); ?></span>
+							<span class="current-users"><?php echo Room::get_users($room['guid'], true); ?></span> / <span class="max-users"><?php echo Room::get_max_users($room['guid']); ?></span>
 						</div>
 						<div class="now-playing">
 						</div>

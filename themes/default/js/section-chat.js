@@ -47,7 +47,7 @@ function sendMessage(message) {
             if(response.response == 'error') {
                $('.chat .text-input .chat-msg').css('border', '1px solid #F33');
             }
-            else if(response.response == 'ok'){
+            else if(response.response == 'ok') {
                $('.chat .text-input .chat-msg').val('');
                getMessages();
             }
@@ -56,9 +56,32 @@ function sendMessage(message) {
    }
 }
 
+// get active users
+function getActiveUsers() {
+   var parameters = {
+      'room_guid': $('.chat').prop('id')
+   }
+
+   $.post('/chat/get-users', parameters, function(data) {
+      if(data) {
+         var response = JSON.parse(data);
+         if(response.length > 0) {
+            for(var i = 0; i < response.length; i++) {
+               var users = '';
+               users += '<p class="nick"><i class="fa fa-user" aria-hidden="true"></i> ' + response[i].user_name + '</p>\n';
+            }
+            $('.chat .active-users').html(users);
+         }
+      }
+   });
+}
+
 $(document).ready(function() {
    // clear the message area
    $('.chat .messages').empty();
+
+   // get the initial user list
+   getActiveUsers();
 
    // set up an event listener for sending a message
    $('.chat .text-input .send').on('click', function() {

@@ -30,7 +30,7 @@ $db = new DatabaseHandler(
 $db->connect();
 
 // remove old user/room entries (i.e. if the user lost their Internet connection, or their web browser crashed)
-$query = "DELETE FROM users_in_rooms WHERE UNIX_TIMESTAMP(last_seen) < UNIX_TIMESTAMP() - 30";
+$query = "DELETE FROM users_in_rooms WHERE last_seen < UNIX_TIMESTAMP() - 30";
 $db->query($query);
 
 // pick up the session if there is one

@@ -7,14 +7,8 @@ if(!defined('_APP')) die('Cannot be executed directly!');
 	</div>
 
 	<div class="active-users floated-left">
-		<p class="nick">Delusion</p>
-		<p class="nick">jrwren</p>
-		<p class="nick">plstate</p>
-		<p class="nick">someRandoWithALongNick</p>
-		<p class="nick">thegleek</p>
-		<p class="nick">Tiki</p>
-		<p class="nick">z0ylent</p>
 	</div>
+	
 	<div class="clearfix">
 	</div>
 

@@ -267,6 +267,11 @@ class Room extends Module {
 					$this->room_name = $result[0]['room_name'];
 					$this->owner_guid = $result[0]['owner_guid'];
 
+					// register user to the room
+					if(!$this->register_user()) {
+						$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "User registration failed - user will not show up on the active user list");
+					}
+
 					// load the page
 					global $config;
 					include $config->get_theme_location() . '/page-room.php';
@@ -399,27 +404,28 @@ class Room extends Module {
 		if($this->is_registered()) {
 			// the user is probably logged in elsewhere (i.e. testing/devel), or it's an old session that will be expired at some point
 			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "User already found in the room with GUID '{$this->guid}' - updating last_seen");
-			$current_timestamp = date('Y-m-d H:i:s');
+			$current_timestamp = time();
 			$query = "UPDATE users_in_rooms SET last_seen = '${current_timestamp}' WHERE user_guid = '${user_guid}' AND room_guid = '{$this->guid}'";
 			if(!$db->query($query)) {
-				$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Database query failure");
-				return false;
+				$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure - last_seen not updated");
 			}
 			else {
-				return true;
+				$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Successfully updated last_seen");
 			}
 		}
 
 		// associate the user with the channel via DB query
-		$current_timestamp = date('Y-m-d H:i:s');
-		$query = "INSERT INTO users_in_rooms (room_guid, user_guid, last_seen) VALUES ('{$this->guid}', '${user_guid}', '${current_timestamp}')";
-		if(!$db->query($query)) {
-			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
-			return false;
-		}
 		else {
-			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "User successfully registered to the room with GUID '{$this->guid}'");
-			return true;
+			$current_timestamp = time();
+			$query = "INSERT INTO users_in_rooms (room_guid, user_guid, last_seen) VALUES ('{$this->guid}', '${user_guid}', '${current_timestamp}')";
+			if(!$db->query($query)) {
+				$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
+				return false;
+			}
+			else {
+				$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "User successfully registered to the room with GUID '{$this->guid}'");
+				return true;
+			}
 		}
 	}
 
@@ -452,12 +458,8 @@ class Room extends Module {
 		$query = "SELECT user_guid FROM users_in_rooms WHERE room_guid = '{$this->guid}' AND user_guid = '${user_guid}'";
 		global $db;
 		$result = $db->query($query);
-		if(!isset($result) || !is_array($result)) {
-			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
-			return false;
-		}
-		else if(count($result) === 0) {
-			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "No user record found in the room with GUID '{$this->guid}'");
+		if(!isset($result) || !isset($result[0]['user_guid'])) {
+			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure (or user is not in this room)");
 			return false;
 		}
 		else {
@@ -530,28 +532,35 @@ class Room extends Module {
 		}
 	}
 
-	static function get_users($guid) {
+	static function get_users($guid, $count = false) {
 		// log the function call
 		global $logger;
 		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
 
 		// query the database to get the other details necessary
-		$query = "SELECT user_guid FROM users_in_rooms WHERE room_guid = '${guid}'";
+		//$query = "SELECT user_guid FROM users_in_rooms WHERE room_guid = '${guid}'";
+		$query = "SELECT users.name AS user_name FROM users_in_rooms INNER JOIN users ON users_in_rooms.user_guid = users.guid WHERE users_in_rooms.room_guid = '${guid}'";
 		global $db;
 		$result = $db->query($query);
 
 		// hopefully, something came back, but check for that
-		if(!isset($result)) {
-			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure");
-			return false;
-		}
-		else if(!is_array($result)) {
-			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Database query returned zero results");
-			return 0;
+		if(!isset($result) || !isset($result[0]['user_name'])) {
+			$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database query failure (or no one is in this room)");
+			if($count == true) {
+				return 0;
+			}
+			else {
+				return false;
+			}
 		}
 		else {
 			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Database query success - returning results");
-			return count($result);
+			if($count == true) {
+				return count($result);
+			}
+			else {
+				return $result;
+			}
 		}
 	}
 }
