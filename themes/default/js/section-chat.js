@@ -1,5 +1,6 @@
-// global variable
+// global variables
 window.last_id = 0;
+window.messagesDivHeight = $('.chat .messages').height();
 
 // get new messages from the server
 function getMessages() {
@@ -25,13 +26,8 @@ function getMessages() {
                window.last_id = response[i].id;
             }
 
-            // append the messages to the chat window
-            $('.chat .messages').append(messages);
-
-            // get a timestamp from the server and save it locally
-            var parameters = {
-               'room_guid': $('.chat').prop('id')
-            }
+            // append the messages to the chat window while scrolling down
+            $('.chat .messages').append(messages).animate({ scrollTop: window.messagesDivHeight }, 250);
          }
       }
    });
