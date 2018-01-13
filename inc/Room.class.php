@@ -443,7 +443,18 @@ class Room extends Module {
 			}
 			else {
 				$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "User successfully registered to the room with GUID '{$this->guid}'");
-				return true;
+
+				// insert a user join message
+				$query = "INSERT INTO chat_messages (tstamp, room_guid, user_guid, message, action, private) VALUES ('${current_timestamp}', '{$this->guid}', '{$user_guid}', 'has joined the room', 'userjoin', false)";
+				global $db;
+				if(!$db->query($query)) {
+					$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Message not recorded due to database error");
+					return false;
+				} else {
+					// log and leave
+					$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Message recorded");
+					return true;
+				}
 			}
 		}
 	}

@@ -245,7 +245,7 @@ class Chat extends Module {
 			// fix timestamps so that they are displayed in normal time notation
 			for($i = 0; $i < count($result); $i++) {
 				if(isset($result[$i]['tstamp'])) {
-					$result[$i]['date_time'] = date('m/d H:i:s A', $result[$i]['tstamp']);
+					$result[$i]['date_time'] = date('m/d h:i:s A', $result[$i]['tstamp']);
 				}
 			}
 			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Messages found for room with GUID '{$this->room_guid}'");
