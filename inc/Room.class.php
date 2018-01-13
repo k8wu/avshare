@@ -582,4 +582,41 @@ class Room extends Module {
 			}
 		}
 	}
+
+	static function system_user_cleanup() {
+		// log the function call
+		global $logger;
+		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
+
+		// need the timestamp
+		$current_timestamp = time();
+
+		// remove the user from any rooms that they are currently in, and message those rooms about it
+		$query = "SELECT user_guid, room_guid FROM users_in_rooms WHERE last_seen < '${current_timestamp}' - 30";
+		global $db;
+		$result = $db->query($query);
+		if(isset($result) && is_array($result)) {
+			foreach($result as $user_record) {
+				// remove the user from any rooms that they are currently in
+				$query = "DELETE FROM users_in_rooms WHERE last_seen < '${current_timestamp}' - 30 AND user_guid = '{$user_record['user_guid']}' AND room_guid = '{$user_record['room_guid']}'";
+				if(!$db->query($query)) {
+					$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Failed to remove the user/room record");
+					return false;
+				}
+
+				// message those rooms about it
+				$current_timestamp = time();
+				$query = "INSERT INTO chat_messages (tstamp, room_guid, user_guid, message, action, private) VALUES ('${current_timestamp}', '{$user_record['room_guid']}', '{$user_record['user_guid']}', 'has left the room', 'userpart', false)";
+				global $db;
+				if(!$db->query($query)) {
+					$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Message not recorded due to database error");
+					return false;
+				} else {
+					// log and leave
+					$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Message recorded");
+					return true;
+				}
+			}
+		}
+	}
 }

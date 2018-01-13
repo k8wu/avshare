@@ -30,8 +30,10 @@ $db = new DatabaseHandler(
 $db->connect();
 
 // remove old user/room entries (i.e. if the user lost their Internet connection, or their web browser crashed)
-$query = "DELETE FROM users_in_rooms WHERE last_seen < UNIX_TIMESTAMP() - 30";
-$db->query($query);
+require_once 'inc/Room.class.php';
+if(!Room::system_user_cleanup()) {
+	$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Unable to clean up old user data - check logs");
+}
 
 // pick up the session if there is one
 require_once 'inc/Module.class.php';
