@@ -2,6 +2,13 @@
 window.last_id = 0;
 window.messagesDivHeight = $('.chat .messages').height();
 
+// this is needed later
+Array.prototype.removeDuplicates = function () {
+    return this.filter(function (item, index, self) {
+        return self.indexOf(item) == index;
+    });
+};
+
 // get new messages from the server
 function getMessages() {
    var parameters = {}
@@ -27,11 +34,13 @@ function getMessages() {
                      break;
 
                   case 'userjoin':
-                     var new_user_list = $('.chat .active-users').html() + '<p class="nick" id="user-' + response[i].user_name + '"><i class="fa fa-user" aria-hidden="true"></i> ' + response[i].user_name + '</p>\n';
-                     new_user_list.sort(function(a, b) {
-                        return $(a).data('sid') > $(b).data('sid');
-                     }).html('.chat .active-users');
-
+                     window.users_list.push(response[i].user_name);
+                     var unique_users = window.users_list.removeDuplicates().sort();
+                     var active_users = '';
+                     for(u = 0; u < unique_users.length; u++) {
+                        active_users += '<p class="nick" id="user-' + unique_users[u] + '"><i class="fa fa-user" aria-hidden="true"></i> ' + unique_users[u] + '</p>\n';
+                     }
+                     $('.chat .active-users').html(active_users);
                      messages += '<span class="msg"><i class="fa fa-user" aria-hidden="true"></i> ' + response[i].user_name + ' has joined the room</span>\n';
                      break;
 
@@ -41,7 +50,7 @@ function getMessages() {
                      break;
 
                   case 'action':
-                     messages += '<span class="msg">* <i class="fa fa-user" aria-hidden="true"></i>' + response[i].user_name + ' ' + response[i].message + '</span>\n';
+                     messages += '<span class="msg">* <i class="fa fa-user" aria-hidden="true"></i> ' + response[i].user_name + ' ' + response[i].message + '</span>\n';
                      break;
 
                   default:
@@ -97,8 +106,10 @@ function getActiveUsers() {
          var response = JSON.parse(data);
          if(response.length > 0) {
             var users = '';
+            window.users_list = [];
             for(var i = 0; i < response.length; i++) {
                users += '<p class="nick" id="user-' + response[i].user_name + '"><i class="fa fa-user" aria-hidden="true"></i> ' + response[i].user_name + '</p>\n';
+               window.users_list.push(response[i].user_name);
             }
             $('.chat .active-users').html(users);
          }
