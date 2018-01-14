@@ -65,7 +65,6 @@ function getMessages() {
                      break;
                }
                window.last_id = response[i].id;
-               console.log(messages);
             }
 
             // append the messages to the chat window while scrolling down
