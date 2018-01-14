@@ -104,14 +104,6 @@ function sendMessage(message) {
    }
 }
 
-// get active users
-function getActiveUsers(room_guid, callback) {
-   var parameters = {
-      'room_guid': room_guid
-   }
-   $.post('/chat/get-users', parameters, callback);
-}
-
 function fillActiveUsers() {
    var parameters = {
       'room_guid': $('.chat').prop('id')
