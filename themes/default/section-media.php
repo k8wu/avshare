@@ -12,13 +12,13 @@ if(!defined('_APP')) die('Cannot be executed directly!');
 			<img src="<?php echo $config->get_theme_uri(); ?>/img/sample_video.png" />
 		</div>
 	</div>
-	
+
 	<div class="controls rounded-edges">
 		<input class="instructions floated-left" type="text" placeholder="Enter URL here" />
 		<button class="button floated-left">
 			Submit
 		</button>
-		
+
 		<div class="clearfix">
 		</div>
 	</div>
@@ -36,3 +36,4 @@ if(!defined('_APP')) die('Cannot be executed directly!');
 	<div class="clearfix">
 	</div>
 </div>
+<script src="<?php echo $config->get_theme_uri(); ?>/js/section-media.js" type="text/javascript"></script>
