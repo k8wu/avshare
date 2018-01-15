@@ -112,6 +112,11 @@ a:visited {
 
 /* for the media section of the room page */
 
+.room-title {
+	text-align: center;
+	color: #CDE;
+}
+
 .viewport {
 	background: #222;
 	width: 550px;

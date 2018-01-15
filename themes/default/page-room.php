@@ -11,6 +11,12 @@ include $config->get_theme_location() . '/header.php';
 ?>
 
 <div class="body rounded-edges">
+	<div class="room-title">
+		<h1><?php echo $this->room_name; ?></h1>
+	</div>
+</div>
+
+<div class="body rounded-edges">
 	<div class="main rounded-edges">
 <?php include $config->get_theme_location() . '/section-media.php'; ?>
 <?php include $config->get_theme_location() . '/section-chat.php'; ?>
