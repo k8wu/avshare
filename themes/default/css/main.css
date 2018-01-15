@@ -157,15 +157,20 @@ a:visited {
 	padding: 2px;
 }
 
-.controls .instructions {
+.controls .media-url {
 	margin: 5px;
 	width: 443px;
 	height: 1.65em;
 }
 
-.controls .button {
+.controls .submit {
 	margin: 5px;
 	font-size: 75%;
+}
+
+.controls .status {
+	margin: 5px;
+	color: #F33;
 }
 
 .whats-next {
