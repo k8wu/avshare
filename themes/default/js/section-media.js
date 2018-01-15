@@ -12,12 +12,14 @@ $(document).ready(function() {
 				var response = JSON.parse(data);
 				if(response.response != 'ok') {
 					$('.viewport .controls .status').val('Error: ' + response.message).removeClass('hidden');
+					$('.viewport .controls .media-url').css('border', '1px solid #F33');
 				}
 				else {
 					var queue_object = '<div class="in-queue" id="' + response.media_url + '">\n';
 					queue_object += '<img src="' + response.image_url + '" />\n';
 					queue_object += '</div>\n';
 					$('.viewport .whats-next').append(queue_object);
+					$('.viewport .controls .media-url').css('border', '1px solid black').val('');
 				}
 			}
 		});
