@@ -8,9 +8,6 @@ require_once $config->app_base_dir . '/inc/Module.class.php';
 
 // class definition
 class Media extends Module {
-   // properties
-   protected $room_guid;
-
    // functions
    function process_action() {
       // log that we are here
@@ -121,7 +118,8 @@ class Media extends Module {
 
       // store it in the database
       $user_guid = $_SESSION['user_object']->get_guid();
-      $query = "INSERT INTO media_queues (room_guid, user_guid, media_url) VALUES ('{$this->room_guid}', '{$user_guid}', '${embed_url}')";
+      $room_guid = $this->parameters['room_guid'];
+      $query = "INSERT INTO media_queues (room_guid, user_guid, media_url) VALUES ('${room_guid}', '{$user_guid}', '${embed_url}')";
       global $db;
       if(!$db->query($query)) {
          $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Failed to add media to queue");
