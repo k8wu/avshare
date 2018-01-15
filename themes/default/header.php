@@ -32,6 +32,7 @@ global $config;
 					<?php if($_SESSION['user_object']->is_admin()) { ?>
 						<button class="button admin-panel">Admin</button>
 					<?php } ?>
+					<button class="button home">Home</button>
 					<button class="button logout">Logout</button>
 				</div>
 			<?php } ?>

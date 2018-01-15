@@ -13,6 +13,10 @@ $(document).ready(function() {
 		window.location = '/admin';
 	});
 
+	$('.home').on('click', function() {
+		window.location = '/';
+	})
+
 	$('.logout').on('click', function() {
 		$.post('/user/logout', function(data) {
 			var response = JSON.parse(data);
