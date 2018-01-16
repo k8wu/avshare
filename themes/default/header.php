@@ -29,10 +29,22 @@ global $config;
 			<?php if(isset($_SESSION['user_object'])) { ?>
 				<div class="user-info" id="<?php echo $_SESSION['user_object']->get_guid(); ?>">
 					<p><i class="fa fa-user" aria-hidden="true"></i> <span class="user-name"><?php echo $_SESSION['user_object']->get_username(); ?></span></p>
-					<?php if($_SESSION['user_object']->is_admin()) { ?>
-						<button class="button admin-panel">Admin</button>
-					<?php } ?>
-					<button class="button home">Home</button>
+					<?php
+					if($this->action == 'home') {
+						if($_SESSION['user_object']->is_admin()) { ?>
+  							<button class="button admin-panel">Admin</button>
+  						<?php }
+					}
+					else if($this->action == 'admin') { ?>
+						<button class="button home">Home</button>
+					<?php }
+					else {
+						if($_SESSION['user_object']->is_admin()) { ?>
+  							<button class="button admin-panel">Admin</button>
+  						<?php } ?>
+						<button class="button home">Home</button>
+					<?php }
+					 ?>
 					<button class="button logout">Logout</button>
 				</div>
 			<?php } ?>
