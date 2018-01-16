@@ -11,7 +11,7 @@ $(document).ready(function() {
 			if(data) {
 				var response = JSON.parse(data);
 				if(response.response != 'ok') {
-					$('.viewport .controls .status').val('Error: ' + response.message).removeClass('hidden');
+					$('.viewport .controls .status').text('Error: ' + response.message).removeClass('hidden');
 					$('.viewport .controls .media-url').css('border', '1px solid #F33');
 				}
 				else {
@@ -20,6 +20,7 @@ $(document).ready(function() {
 					queue_object += '</div>\n';
 					$('.viewport .whats-next').append(queue_object);
 					$('.viewport .controls .media-url').css('border', '1px solid black').val('');
+					$('.viewport .controls .status').text('').addClass('hidden');
 				}
 			}
 		});
