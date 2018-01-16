@@ -89,11 +89,6 @@ class Media extends Module {
       global $logger;
       $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
 
-      // see if the media even exists
-      if(!$this->is_url_valid($media_url)) {
-         return false;
-      }
-
       // since we only support certain types of media, do some checks for those - right now it's only YouTube
       if(strpos($media_url, 'youtube') > 0 || strpos($media_url, 'youtu.be') > 0) {
          $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "YouTube video URL detected - processing");
@@ -121,6 +116,15 @@ class Media extends Module {
          return false;
       }
 
+      // unlike standard YouTube URLs, the image URL will actually return a 404 if the video does not exist
+      $headers = get_headers($image_url, 1);
+      $status_line = explode(' ', $headers[0]);
+      $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Status code: {$status_line[1]}");
+      if($status_line[1] >= 400) {
+         $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Media non-existent at the given URL");
+         return false;
+      }
+
       // store it in the database
       $user_guid = $_SESSION['user_object']->get_guid();
       $room_guid = $this->parameters['room_guid'];
@@ -137,44 +141,6 @@ class Media extends Module {
             'image_url' => $image_url
          );
          return $response;
-      }
-   }
-
-   function is_url_valid($url) {
-      // log the function call
-      global $logger;
-      $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
-
-      // get the headers
-      $headers = get_headers($url);
-
-      // if this function comes back false, the URL isn't there
-      if($headers === false) {
-         $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Resource doesn't exist");
-         return false;
-      }
-
-      // actually parse the headers for the response code
-      foreach($headers as $header) {
-         // corrects $url when 301/302 redirect(s) lead(s) to 200:
-         if(preg_match("/^Location: (http.+)$/",$header,$m)) {
-            $url=$m[1];
-         }
-
-         // grabs the last $header $code, in case of redirect(s):
-         if(preg_match("/^HTTP.+\s(\d\d\d)\s/",$header,$m)) {
-            $code=$m[1];
-         }
-      }
-
-      // check the return code
-      if($code == 200) {
-         $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Resource exists");
-         return true;
-      }
-      else {
-         $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Resource returned error code ${code}");
-         return false;
       }
    }
 }
