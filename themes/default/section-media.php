@@ -9,8 +9,7 @@ if(!defined('_APP')) die('Cannot be executed directly!');
 			<p>We support <a href="https://youtube.com" target="_blank">YouTube</a> links.</p>
 		</div>
 
-		<div class="now-playing">
-			<img src="<?php echo $config->get_theme_uri(); ?>/img/sample_video.png" />
+		<div class="now-playing hidden">
 		</div>
 	</div>
 
