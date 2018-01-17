@@ -1,5 +1,26 @@
 // state variable for whether a video is playing
-var videoIsPlaying = false;
+var mediaIsPlaying = false;
+
+// polling function (front end side)
+function pollForNextMedia() {
+	var parameters = {
+		'room_guid': $('.viewport').prop('id'),
+		'media_playing': mediaIsPlaying
+	}
+	$.post('/media/poll', parameters, function(data) {
+		if(data) {
+			var response = JSON.parse(data);
+			if(response.response == 'error') {
+				console.log(response.message);
+			}
+			else if(response.response == 'ok'){
+				// media is ready to play - embed the video ASAP
+				var media_player = $('.viewport .video .now-playing');
+				media_player.removeClass('hidden').html('<iframe width="' + media_player.width() + '" height="' + media_player.height() + '" src = "' + response.media_url + '" />');
+			}
+		}
+	});
+}
 
 $(document).ready(function() {
 	$('.viewport .controls .submit').on('click', function() {
@@ -24,7 +45,7 @@ $(document).ready(function() {
 				}
 			}
 		});
-		if(!videoIsPlaying) {
+		if(!mediaIsPlaying) {
 			// TODO - anything that needs to be done when the video is not playing
 		}
 		else {
