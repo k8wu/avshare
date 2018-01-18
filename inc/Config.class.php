@@ -20,6 +20,9 @@ class Config {
 	public $logger_location;
 	public $logger_level;
 
+	// Google API key data
+	public $google_api_key;
+
 	// database configuration methods are here as well
 	function get_value($option_name) {
 		global $logger;

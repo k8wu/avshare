@@ -76,6 +76,22 @@ class Media extends Module {
             $response['response'] = 'ok';
             break;
 
+         case 'poll':
+            // we already have what we need - see if there's anything in queue right now
+            $response = $this->poll();
+
+            // did the request work at all?
+            if(!isset($response) || !is_array($response)) {
+               $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Queue polling failed");
+               $response = array(
+                  'response' => 'error',
+                  'message' => 'Failed to add media URL to queue'
+               );
+               break;
+            }
+
+            // is there a video URL ready to go?
+
          default:
             break;
       }
@@ -142,5 +158,42 @@ class Media extends Module {
          );
          return $response;
       }
+   }
+
+   function youtube_media_length($video_id) {
+      // log that we are here
+      global $logger;
+      $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
+
+      // craft a URL to get the contentDetails attributes of a YouTube video
+      global $config;
+      $request_url = 'https://www.googleapis.com/youtube/v3/videos?id=' . $video_id . '&part=contentDetails&key=' . $config->google_api_key;
+
+      // need a cURL resource for this
+      $curl_res = curl_init();
+      $curl_parameters = array(
+         CURLOPT_URL => $request_url,
+         CURLOPT_HEADER => false,
+         CURLOPT_RETURNTRANSFER => true
+      );
+      curl_setopt_array($curl_res, $curl_parameters);
+
+      // check for a non-response
+      if($result === false) {
+         $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "cURL call failed for YouTube resource while attempting to determine video length");
+         return false;
+      }
+
+      // get the response from the JSON array that got passed back
+      $result = json_decode(curl_exec($curl_res));
+      $video_duration = $result->items[0]->contentDetails->duration;
+      if(!$video_duration) {
+         $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Invalid video duration");
+         return false;
+      }
+
+      // parse the video duration and return it to the caller
+      $interval = new DateInterval($video_duration);
+      return $interval->h * 3600 + $interval->i * 60 + $interval->s;
    }
 }
