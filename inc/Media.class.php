@@ -122,7 +122,7 @@ class Media extends Module {
          $video_id = $video_id[0];
 
          // build the necessary URLs for the queue and the front end
-         $embed_url = 'https://www.youtube.com/embed/' . $video_id . '?autoplay=1&controls=0&disablekb=1&fs=0&origin=' . ($_SERVER['HTTPS'] && $_SERVER['HTTPS'] != "off" ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . '&playsinline=1&rel=0';
+         $embed_url = 'https://www.youtube.com/embed/' . $video_id . '?autoplay=1&controls=0&disablekb=1&fs=0&origin=' . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != "off" ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . '&playsinline=1&rel=0';
          $image_url = 'https://img.youtube.com/vi/' . $video_id . '/0.jpg';
       }
 
@@ -141,10 +141,13 @@ class Media extends Module {
          return false;
       }
 
+      // get the duration in seconds
+      $duration = $this->youtube_get_media_length($video_id);
+
       // store it in the database
       $user_guid = $_SESSION['user_object']->get_guid();
       $room_guid = $this->parameters['room_guid'];
-      $query = "INSERT INTO media_queues (room_guid, user_guid, media_url) VALUES ('${room_guid}', '{$user_guid}', '${embed_url}')";
+      $query = "INSERT INTO media_queues (room_guid, user_guid, media_url, when_added, duration) VALUES ('${room_guid}', '{$user_guid}', '${embed_url}', UNIX_TIMESTAMP(), '${duration}')";
       global $db;
       if(!$db->query($query)) {
          $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Failed to add media to queue");
@@ -160,7 +163,7 @@ class Media extends Module {
       }
    }
 
-   function youtube_media_length($video_id) {
+   function youtube_get_media_length($video_id) {
       // log that we are here
       global $logger;
       $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
@@ -170,13 +173,14 @@ class Media extends Module {
       $request_url = 'https://www.googleapis.com/youtube/v3/videos?id=' . $video_id . '&part=contentDetails&key=' . $config->google_api_key;
 
       // need a cURL resource for this
+      $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Building cURL resource");
       $curl_res = curl_init();
       $curl_parameters = array(
          CURLOPT_URL => $request_url,
          CURLOPT_HEADER => false,
          CURLOPT_RETURNTRANSFER => true
       );
-      curl_setopt_array($curl_res, $curl_parameters);
+      $result = curl_setopt_array($curl_res, $curl_parameters);
 
       // check for a non-response
       if($result === false) {
@@ -185,15 +189,16 @@ class Media extends Module {
       }
 
       // get the response from the JSON array that got passed back
+      $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Executing cURL call");
       $result = json_decode(curl_exec($curl_res));
-      $video_duration = $result->items[0]->contentDetails->duration;
-      if(!$video_duration) {
+      if(!$result->items[0]->contentDetails->duration) {
          $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Invalid video duration");
          return false;
       }
 
       // parse the video duration and return it to the caller
-      $interval = new DateInterval($video_duration);
-      return $interval->h * 3600 + $interval->i * 60 + $interval->s;
+      $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Returning valid duration to caller");
+      $video_duration = explode('M', trim($result->items[0]->contentDetails->duration, 'PTS'));
+      return ($video_duration[0] * 60) + $video_duration[1];
    }
 }
