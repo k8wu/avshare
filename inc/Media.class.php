@@ -77,20 +77,42 @@ class Media extends Module {
             break;
 
          case 'poll':
-            // we already have what we need - see if there's anything in queue right now
-            $response = $this->poll();
-
-            // did the request work at all?
-            if(!isset($response) || !is_array($response)) {
-               $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Queue polling failed");
+            // what is the wait time for the next queue item to play?
+            $wait_time = $this->next_play_wait();
+            if(isset($wait_time) && $wait_time > 0) {
+               $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Not playing any media for ${wait_time} seconds");
                $response = array(
-                  'response' => 'error',
-                  'message' => 'Failed to add media URL to queue'
+                  'response' => 'wait',
+                  'message' => 'Wait until next play',
+                  'wait_time' => $wait_time
                );
                break;
             }
 
-            // is there a video URL ready to go?
+            // if there is no wait time, just get the next URL and send it to the frontend
+            else {
+               // but first, check if there is a media URL to send
+               $media_url = $this->get_next_media();
+               if(!isset($media_url)) {
+                  $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Not sending any media");
+                  $response = array(
+                     'response' => 'no_media',
+                     'message' => 'No new media in queue'
+                  );
+                  break;
+               }
+               else {
+                  $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Sending media to play");
+                  $response = array(
+                     'response' => 'ok',
+                     'message' => 'Play this media',
+                     'media_url' => $this->get_next_media()
+                  );
+                  break;
+               }
+               break;
+            }
+            break;
 
          default:
             break;
@@ -200,6 +222,30 @@ class Media extends Module {
       $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Returning valid duration to caller");
       $video_duration = explode('M', trim($result->items[0]->contentDetails->duration, 'PTS'));
       return ($video_duration[0] * 60) + $video_duration[1];
+   }
+
+   function get_next_media() {
+      // log that we are here
+      global $logger;
+      $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
+
+      // pick up the room GUID from the parameters passed
+      $room_guid = $this->parameters['room_guid'];
+
+      // what, if anything, is next in the queue?
+      $query = "SELECT media_url FROM media_queues WHERE room_guid = '${room_guid}' AND when_played = NULL ORDER BY when_added DESC LIMIT 1";
+      global $db;
+      $result = $db->query($query);
+
+      // if there's nothing in the queue, bail
+      if(!isset($result) || !is_array($result)) {
+         $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Nothing found in the queue");
+         return false;
+      }
+
+      // otherwise, return the URL
+      $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Next video returned to caller");
+      return $result['$media_url'];
    }
 
    // if nothing is playing, this will return false, but if something is playing, then it will return the number of seconds that the caller should wait until playing the next item from the queue
