@@ -10,10 +10,7 @@ function pollForNextMedia() {
 	$.post('/media/poll', parameters, function(data) {
 		if(data) {
 			var response = JSON.parse(data);
-			if(response.response == 'error') {
-				console.log(response.message);
-			}
-			else if(response.response == 'ok'){
+			if(response.response == 'ok'){
 				// media is ready to play - embed the video ASAP
 				var media_player = $('.viewport .video .now-playing');
 				media_player.removeClass('hidden').html('<iframe width="' + media_player.width() + '" height="' + media_player.height() + '" src = "' + response.media_url + '" />');
