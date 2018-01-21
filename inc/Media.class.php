@@ -14,7 +14,7 @@ class Media extends Module {
       global $logger;
       $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
 
-      // check that the action being called is "chat"
+      // check that the action being called is "media"
       if($this->action != 'media') {
          $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Incorrect action for this module");
          $response = array(
@@ -200,5 +200,40 @@ class Media extends Module {
       $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Returning valid duration to caller");
       $video_duration = explode('M', trim($result->items[0]->contentDetails->duration, 'PTS'));
       return ($video_duration[0] * 60) + $video_duration[1];
+   }
+
+   // if nothing is playing, this will return false, but if something is playing, then it will return the number of seconds that the caller should wait until playing the next item from the queue
+   function next_play_wait() {
+      // log that we are here
+      global $logger;
+      $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
+
+      // pick up the room GUID from the parameters passed
+      $room_guid = $this->parameters['room_guid'];
+
+      // check the database for the latest video that was added
+      $query = "SELECT media_url, when_added, duration FROM media_queues WHERE room_guid = '${room_guid}' AND when_played = NULL ORDER BY when_added DESC LIMIT 1";
+      global $db;
+      $result = $db->query($query);
+
+      // if there are no results, bail
+      if(!isset($result) || !is_array($result)) {
+         $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Nothing found in the queue");
+         return false;
+      }
+
+      // do some math to determine whether the media that was found would still be playing
+      $next_play = $result['when_added'] + $result['duration'];
+      $wait_time = $next_play - time();
+      if($wait_time <= 0) {
+         // getting here means that nothing is playing, so we tell the caller to go for it
+         $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Nothing is currently playing in this room");
+         return false;
+      }
+      else {
+         // getting here means that something is playing, so we pass the wait time to the caller
+         $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Something is playing in this room that will be finished in ${wait_time} seconds");
+         return $wait_time;
+      }
    }
 }
