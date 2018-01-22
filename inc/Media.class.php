@@ -76,6 +76,23 @@ class Media extends Module {
             $response['response'] = 'ok';
             break;
 
+         case 'queue-get':
+            // what is in the queue for this room?
+            $response = $this->queue_get();
+            if(!isset($response) || !is_array($response)) {
+               $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "No queue items found");
+               $response = array(
+                  'response' => 'no_queue',
+                  'message' => 'No media in the queue'
+               );
+               break;
+            }
+            else {
+               $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Queue items found and sent to caller");
+               break;
+            }
+            break;
+
          case 'poll':
             // what is the wait time for the next queue item to play?
             $wait_time = $this->next_play_wait();
@@ -183,6 +200,31 @@ class Media extends Module {
          );
          return $response;
       }
+   }
+
+   function queue_get() {
+      // log that we are here
+      global $logger;
+      $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
+
+      // see if there are any queue items for this room
+      $query = "SELECT media_url FROM media_queues WHERE when_played IS NULL ORDER BY when_added ASC";
+      global $db;
+      $result = $db->query($query);
+
+      // the client is going to want image URLs to show in the queue, so let's put those PHP string manipulation functions to good use!
+      $out = array();
+      for($i = 0; $i < count($result); $i++) {
+         $temp_url = explode('?', $result[$i]['media_url']);
+         $temp_url = str_replace('embed', 'vi', $temp_url[0]);
+         $temp_url = str_replace('www', 'img', $temp_url);
+         $temp_url .= '/0.jpg';
+         $out[$i]['image_url'] = $temp_url;
+         $out[$i]['media_url'] = $result[$i]['media_url'];
+      }
+
+      $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Returning queue to caller");
+      return $out;
    }
 
    function youtube_get_media_length($video_id) {

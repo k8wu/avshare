@@ -21,7 +21,29 @@ function pollForNextMedia() {
 	});
 }
 
+function parseExistingQueue() {
+	var parameters = {
+		'room_guid': $('.viewport').prop('id')
+	}
+	$.post('/media/queue-get', parameters, function(data) {
+		if(data) {
+			var response = JSON.parse(data);
+			if(!response.response) {
+				for(var i = 0; i < response.length; i++) {
+					var queue_object = '<div class="in-queue" id="' + response[i].media_url + '">\n';
+					queue_object += '<img src="' + response[i].image_url + '" />\n';
+					queue_object += '</div>\n';
+					$('.viewport .whats-next').append(queue_object);
+				}
+			}
+		}
+	});
+}
+
 $(document).ready(function() {
+	// get the existing queue
+	parseExistingQueue();
+
 	$('.viewport .controls .submit').on('click', function() {
 		var parameters = {
 			'media_url': $('.viewport .controls .media-url').val(),
