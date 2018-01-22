@@ -93,7 +93,7 @@ class Media extends Module {
             else {
                // but first, check if there is a media URL to send
                $media_url = $this->get_next_media();
-               if(!isset($media_url)) {
+               if(!isset($media_url) || $media_url === false) {
                   $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Not sending any media");
                   $response = array(
                      'response' => 'no_media',
@@ -106,7 +106,7 @@ class Media extends Module {
                   $response = array(
                      'response' => 'ok',
                      'message' => 'Play this media',
-                     'media_url' => $this->get_next_media()
+                     'media_url' => $media_url
                   );
                   break;
                }
@@ -233,7 +233,7 @@ class Media extends Module {
       $room_guid = $this->parameters['room_guid'];
 
       // what, if anything, is next in the queue?
-      $query = "SELECT media_url FROM media_queues WHERE room_guid = '${room_guid}' AND when_played = NULL ORDER BY when_added DESC LIMIT 1";
+      $query = "SELECT media_url, when_added FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NULL ORDER BY when_added DESC LIMIT 1";
       global $db;
       $result = $db->query($query);
 
@@ -243,9 +243,15 @@ class Media extends Module {
          return false;
       }
 
-      // otherwise, return the URL
-      $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Next video returned to caller");
-      return $result['$media_url'];
+      // otherwise, mark it as played in the database and return the URL
+      $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Next video marked as played and returned to the caller");
+      $when_added = $result[0]['when_added'];
+      $media_url = $result[0]['media_url'];
+      $query = "UPDATE media_queues SET when_played = " . time() . " WHERE room_guid = '${room_guid}' AND media_url = '${media_url}' AND when_added = '${when_added}'";
+      if(!$db->query($query)) {
+         $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database call failure");
+      }
+      return $media_url;
    }
 
    // if nothing is playing, this will return false, but if something is playing, then it will return the number of seconds that the caller should wait until playing the next item from the queue
@@ -258,7 +264,7 @@ class Media extends Module {
       $room_guid = $this->parameters['room_guid'];
 
       // check the database for the latest video that was added
-      $query = "SELECT media_url, when_added, duration FROM media_queues WHERE room_guid = '${room_guid}' AND when_played = NULL ORDER BY when_added DESC LIMIT 1";
+      $query = "SELECT media_url, when_added, duration FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NOT NULL ORDER BY when_added DESC LIMIT 1";
       global $db;
       $result = $db->query($query);
 
@@ -269,7 +275,7 @@ class Media extends Module {
       }
 
       // do some math to determine whether the media that was found would still be playing
-      $next_play = $result['when_added'] + $result['duration'];
+      $next_play = $result[0]['when_added'] + $result[0]['duration'];
       $wait_time = $next_play - time();
       if($wait_time <= 0) {
          // getting here means that nothing is playing, so we tell the caller to go for it

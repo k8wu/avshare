@@ -150,6 +150,11 @@ a:visited {
 	padding: 0;
 }
 
+.now-playing iframe {
+	width: 530px;
+	height: 295px;
+}
+
 .controls {
 	background: #333;
 	margin: 5px;
@@ -340,9 +345,9 @@ a:visited {
 }
 
 .home-page .room-box .now-playing {
-	width: 268px;
-	height: 151px;
-	margin: 5px;
+	width: 195px;
+	height: 110px;
+	margin: 5px auto;
 	border: 1px solid white;
 	background: #111;
 }

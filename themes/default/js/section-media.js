@@ -1,19 +1,21 @@
-// state variable for whether a video is playing
-var mediaIsPlaying = false;
-
 // polling function (front end side)
 function pollForNextMedia() {
 	var parameters = {
-		'room_guid': $('.viewport').prop('id'),
-		'media_playing': mediaIsPlaying
+		'room_guid': $('.viewport').prop('id')
 	}
 	$.post('/media/poll', parameters, function(data) {
 		if(data) {
 			var response = JSON.parse(data);
 			if(response.response == 'ok'){
 				// media is ready to play - embed the video ASAP
+				$('.viewport .video .info-text').addClass('hidden');
 				var media_player = $('.viewport .video .now-playing');
 				media_player.removeClass('hidden').html('<iframe width="' + media_player.width() + '" height="' + media_player.height() + '" src = "' + response.media_url + '" />');
+				$('#' + response.media_url).remove();
+				clearInterval(window.poller);
+				window.poller = setInterval(function() {
+					pollForNextMedia();
+				}, 5000);
 			}
 		}
 	});
@@ -42,11 +44,9 @@ $(document).ready(function() {
 				}
 			}
 		});
-		if(!mediaIsPlaying) {
-			// TODO - anything that needs to be done when the video is not playing
-		}
-		else {
-			// TODO - anything that needs to be done when the video is playing
-		}
 	});
+
+	window.poller = setInterval(function() {
+		pollForNextMedia()
+	}, 5000);
 });
