@@ -185,7 +185,7 @@ class Media extends Module {
          $video_id = $video_id[0];
 
          // build the necessary URLs for the queue and the front end
-         $embed_url = "https://www.youtube.com/embed/${video_id}?autoplay=1&controls=0&disablekb=1&enablejsapi=1&fs=0&origin=" . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != "off" ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . "&playsinline=1&rel=0";
+         $embed_url = "https://www.youtube.com/embed/${video_id}?&controls=0&disablekb=1&enablejsapi=1&fs=0&origin=" . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != "off" ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . "&playsinline=1&rel=0";
          $image_url = "https://img.youtube.com/vi/${video_id}/0.jpg";
       }
 

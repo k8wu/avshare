@@ -1,3 +1,24 @@
+// start the YouTube player
+function startYouTubePlayer(player_id) {
+	var player;
+	// the YouTube API is ready
+	player = new YT.Player(player_id, {
+		events: {
+			'onReady': onPlayerReady,
+			'onStateChange': onPlayerStateChange
+		}
+	});
+
+	function onPlayerReady(event) {
+		console.log('the player is ready, playing the media')
+		event.target.playVideo();
+	}
+
+	function onPlayerStateChange(event) {
+		console.log('player state = ' + event.target.getPlayerState());
+	}
+}
+
 // polling function (front end side)
 function pollForNextMedia() {
 	var parameters = {
@@ -10,8 +31,13 @@ function pollForNextMedia() {
 				// media is ready to play - embed the video ASAP
 				$('.viewport .video .info-text').addClass('hidden');
 				var media_player = $('.viewport .video .now-playing');
-				media_player.removeClass('hidden').html('<iframe width="' + media_player.width() + '" height="' + media_player.height() + '" src = "' + response.media_url + '" />');
-				$('#' + response.media_url).remove();
+				media_player.removeClass('hidden').html('<iframe id="youtube-player" width="' + media_player.width() + '" height="' + media_player.height() + '" src = "' + response.media_url + '" />');
+				startYouTubePlayer('youtube-player');
+
+				// take the item off the queue if it exists
+				if($('#' + response.media_url)) {
+					$('#' + response.media_url).remove();
+				}
 				clearInterval(window.poller);
 				window.poller = setInterval(function() {
 					pollForNextMedia();
@@ -55,8 +81,9 @@ $(document).ready(function() {
 				// media is ready to play - embed the video ASAP
 				$('.viewport .video .info-text').addClass('hidden');
 				var media_player = $('.viewport .video .now-playing');
-				media_player.removeClass('hidden').html('<iframe width="' + media_player.width() + '" height="' + media_player.height() + '" src = "' + response.media_url + '" />');
-				//$('#' + response.media_url).remove();
+				media_player.removeClass('hidden').empty().append('<iframe type="text/html" id="youtube-player" width="' + media_player.width() + '" height="' + media_player.height() + '" src="' + response.media_url + '" />');
+
+				startYouTubePlayer('youtube-player');
 			}
 		}
 	});

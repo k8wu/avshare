@@ -32,4 +32,5 @@ if(!defined('_APP')) die('Cannot be executed directly!');
 	<div class="clearfix">
 	</div>
 </div>
+<script src="https://www.youtube.com/iframe_api"></script>
 <script src="<?php echo $config->get_theme_uri(); ?>/js/section-media.js" type="text/javascript"></script>
