@@ -215,7 +215,7 @@ class Room extends Module {
 					}
 
 					// for each parameter we receive, send it individually to the method for processing
-					foreach(array('room_name', 'uri', 'max_users', 'owner_guid') as $property) {
+					foreach(array('room_name', 'room_uri', 'max_users', 'owner_guid') as $property) {
 						if(isset($this->parameters[$property])) {
 							if(!$this->modify_room($property, $this->parameters[$property])) {
 								$logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Failed to modify '${property}'");
