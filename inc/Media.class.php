@@ -93,6 +93,30 @@ class Media extends Module {
             }
             break;
 
+         case 'first-play':
+            // is there anything that is playing right now?
+            $start_time = $this->time_from_media_start();
+            if(isset($start_time) && $start_time > 0) {
+               // see what it is
+               $queue = $this->queue_get(true);
+               $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Response: '" . print_r($queue, true) . "'");
+               if(isset($queue) && is_array($queue)) {
+                  $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "There is something playing here");
+                  $queue[0]['media_url'] .= "&start=${start_time}";
+                  $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Response: '" . print_r($queue, true) . "'");
+                  $response = $queue[0];
+                  $response['response'] = 'ok';
+                  break;
+               }
+            }
+            else {
+               $response = array(
+                  'response' => 'no_video',
+                  'message' => 'Nothing playing right now'
+               );
+               break;
+            }
+
          case 'poll':
             // what is the wait time for the next queue item to play?
             $wait_time = $this->next_play_wait();
@@ -162,7 +186,7 @@ class Media extends Module {
 
          // build the necessary URLs for the queue and the front end
          $embed_url = 'https://www.youtube.com/embed/' . $video_id . '?autoplay=1&controls=0&disablekb=1&fs=0&origin=' . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != "off" ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . '&playsinline=1&rel=0';
-         $image_url = 'https://img.youtube.com/vi/' . $video_id . '/0.jpg';
+         $image_url = "https://img.youtube.com/vi/${video_id}/0.jpg";
       }
 
       // otherwise, we don't support the request
@@ -202,15 +226,29 @@ class Media extends Module {
       }
    }
 
-   function queue_get() {
+   function queue_get($first_play = false) {
       // log that we are here
       global $logger;
       $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
 
+      // pick up the room GUID from the parameters passed
+      $room_guid = $this->parameters['room_guid'];
+
       // see if there are any queue items for this room
-      $query = "SELECT media_url FROM media_queues WHERE when_played IS NULL ORDER BY when_added ASC";
+      if($first_play) {
+         $query = "SELECT media_url FROM media_queues WHERE room_guid = '${room_guid}' ORDER BY when_added DESC LIMIT 1";
+      }
+      else {
+         $query = "SELECT media_url FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NULL ORDER BY when_added ASC";
+      }
       global $db;
       $result = $db->query($query);
+
+      // check that we even have results
+      if(!isset($result) || !is_array($result)) {
+         $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "No media objects found in queue");
+         return false;
+      }
 
       // the client is going to want image URLs to show in the queue, so let's put those PHP string manipulation functions to good use!
       $out = array();
@@ -328,6 +366,45 @@ class Media extends Module {
          // getting here means that something is playing, so we pass the wait time to the caller
          $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Something is playing in this room that will be finished in ${wait_time} seconds");
          return $wait_time;
+      }
+   }
+
+   function time_from_media_start() {
+      global $logger;
+      $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
+
+      // pick up the room GUID from the parameters passed
+      $room_guid = $this->parameters['room_guid'];
+
+      // check the database for the latest video that might be playing
+      $query = "SELECT media_url, when_played, duration FROM media_queues WHERE room_guid = '${room_guid}' ORDER BY id DESC LIMIT 1";
+      global $db;
+      $result = $db->query($query);
+      $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "when_played: {$result[0]['when_played']}");
+
+      // if there are no results, then nothing has ever been played here
+      if(!isset($result) || !is_array($result)) {
+         $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Possible database query failure (but proceeding with a false return anyway)");
+         return false;
+      }
+
+      // if when_played is null, nothing is playing, so return false
+      if(!isset($result[0]['when_played']) || $result[0]['when_played'] === null) {
+         $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "No media is playing right now");
+         return false;
+      }
+
+      // do some math to determine whether the media that was found would still be playing
+      $start_time = time() - $result[0]['when_played'];
+      if($start_time >= $result[0]['duration']) {
+         // getting here means that nothing is playing, so we tell the caller to go for it
+         $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Nothing is currently playing in this room");
+         return false;
+      }
+      else {
+         // getting here means that something is playing, so we pass the wait time to the caller
+         $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Something is playing in this room that will be finished in ${start_time} seconds");
+         return $start_time;
       }
    }
 }

@@ -6,7 +6,7 @@ function pollForNextMedia() {
 	$.post('/media/poll', parameters, function(data) {
 		if(data) {
 			var response = JSON.parse(data);
-			if(response.response == 'ok'){
+			if(response.response == 'ok') {
 				// media is ready to play - embed the video ASAP
 				$('.viewport .video .info-text').addClass('hidden');
 				var media_player = $('.viewport .video .now-playing');
@@ -44,6 +44,24 @@ $(document).ready(function() {
 	// get the existing queue
 	parseExistingQueue();
 
+	// see if there's anything playing, and play it if there is
+	var parameters = {
+		'room_guid': $('.viewport').prop('id')
+	}
+	$.post('/media/first-play', parameters, function(data) {
+		if(data) {
+			var response = JSON.parse(data);
+			if(response.response == 'ok') {
+				// media is ready to play - embed the video ASAP
+				$('.viewport .video .info-text').addClass('hidden');
+				var media_player = $('.viewport .video .now-playing');
+				media_player.removeClass('hidden').html('<iframe width="' + media_player.width() + '" height="' + media_player.height() + '" src = "' + response.media_url + '" />');
+				//$('#' + response.media_url).remove();
+			}
+		}
+	});
+
+	// click handler for the submit button
 	$('.viewport .controls .submit').on('click', function() {
 		var parameters = {
 			'media_url': $('.viewport .controls .media-url').val(),
