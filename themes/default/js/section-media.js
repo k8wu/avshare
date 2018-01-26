@@ -4,18 +4,12 @@ function startYouTubePlayer(player_id) {
 	// the YouTube API is ready
 	player = new YT.Player(player_id, {
 		events: {
-			'onReady': onPlayerReady,
-			'onStateChange': onPlayerStateChange
+			'onReady': onPlayerReady
 		}
 	});
 
 	function onPlayerReady(event) {
-		console.log('the player is ready, playing the media')
 		event.target.playVideo();
-	}
-
-	function onPlayerStateChange(event) {
-		console.log('player state = ' + event.target.getPlayerState());
 	}
 }
 
