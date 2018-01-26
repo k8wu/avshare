@@ -115,7 +115,7 @@ class Media extends Module {
             $media_url = $this->get_next_media();
             if(isset($media_url) && strlen($media_url > 0)) {
                $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "media_url: '${media_url}'");
-               $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Next unplayed video sent to caller");
+               $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Next unplayed media object sent to caller");
                $response = array(
                   'response' => 'ok',
                   'media_url' => $media_url
@@ -125,7 +125,7 @@ class Media extends Module {
 
             // nothing is playing, and nothing is in queue that hasn't been played yet
             $response = array(
-               'response' => 'no_video',
+               'response' => 'no_media',
                'message' => 'Nothing playing right now'
             );
             break;
@@ -188,24 +188,24 @@ class Media extends Module {
 
          // get the video ID
          if(strpos($media_url, 'youtube') > 0) {
-            $video_id = explode("?v=", $media_url);
+            $media_id = explode("?v=", $media_url);
          }
          else if(strpos($media_url, 'youtu.be') > 0) {
-            $video_id = explode("//youtu.be/", $media_url);
+            $media_id = explode("//youtu.be/", $media_url);
          }
 
          // if we don't have it yet, they're probably in the other format
-         if(empty($video_id[1])) {
-            $video_id = explode("/v/", $media_url);
+         if(empty($media_id[1])) {
+            $media_id = explode("/v/", $media_url);
          }
 
          // remove other parameters
-         $video_id = explode("&", $video_id[1]);
-         $video_id = $video_id[0];
+         $media_id = explode("&", $media_id[1]);
+         $media_id = $media_id[0];
 
          // build the necessary URLs for the queue and the front end
-         $embed_url = "https://www.youtube.com/embed/${video_id}?&controls=0&disablekb=1&enablejsapi=1&fs=0&origin=" . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != "off" ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . "&playsinline=1&rel=0";
-         $image_url = "https://img.youtube.com/vi/${video_id}/0.jpg";
+         $embed_url = "https://www.youtube.com/embed/${media_id}?&controls=0&disablekb=1&enablejsapi=1&fs=0&origin=" . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != "off" ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . "&playsinline=1&rel=0";
+         $image_url = "https://img.youtube.com/vi/${media_id}/0.jpg";
       }
 
       // otherwise, we don't support the request
@@ -224,7 +224,7 @@ class Media extends Module {
       }
 
       // get the duration in seconds
-      $duration = $this->youtube_get_media_length($video_id);
+      $duration = $this->youtube_get_media_length($media_id);
 
       // store it in the database
       $user_guid = $_SESSION['user_object']->get_guid();
@@ -284,14 +284,14 @@ class Media extends Module {
       return $out;
    }
 
-   function youtube_get_media_length($video_id) {
+   function youtube_get_media_length($media_id) {
       // log that we are here
       global $logger;
       $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
 
       // craft a URL to get the contentDetails attributes of a YouTube video
       global $config;
-      $request_url = 'https://www.googleapis.com/youtube/v3/videos?id=' . $video_id . '&part=contentDetails&key=' . $config->google_api_key;
+      $request_url = 'https://www.googleapis.com/youtube/v3/videos?id=' . $media_id . '&part=contentDetails&key=' . $config->google_api_key;
 
       // need a cURL resource for this
       $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Building cURL resource");
@@ -343,7 +343,7 @@ class Media extends Module {
       }
 
       // otherwise, mark it as played in the database and return the URL
-      $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Next video marked as played and returned to the caller");
+      $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Next media object marked as played and returned to the caller");
       $when_added = $result[0]['when_added'];
       $media_url = $result[0]['media_url'];
       $query = "UPDATE media_queues SET when_played = " . time() . " WHERE room_guid = '${room_guid}' AND media_url = '${media_url}' AND when_added = '${when_added}'";
@@ -362,7 +362,7 @@ class Media extends Module {
       // pick up the room GUID from the parameters passed
       $room_guid = $this->parameters['room_guid'];
 
-      // check the database for the latest video that was added
+      // check the database for the latest media object that was added
       $query = "SELECT when_played, duration FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NOT NULL ORDER BY when_played DESC LIMIT 1";
       global $db;
       $result = $db->query($query);
@@ -395,7 +395,7 @@ class Media extends Module {
       // pick up the room GUID from the parameters passed
       $room_guid = $this->parameters['room_guid'];
 
-      // check the database for the latest video that might be playing
+      // check the database for the latest media object that might be playing
       $query = "SELECT media_url, when_played, duration FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NOT NULL ORDER BY when_played DESC LIMIT 1";
       global $db;
       $result = $db->query($query);
