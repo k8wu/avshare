@@ -1,8 +1,7 @@
 // start the YouTube player
 function startYouTubePlayer(player_id) {
-	var player;
 	// the YouTube API is ready
-	player = new YT.Player(player_id, {
+	var player = new YT.Player(player_id, {
 		events: {
 			'onReady': onPlayerReady
 		}
