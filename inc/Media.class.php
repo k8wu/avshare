@@ -113,7 +113,8 @@ class Media extends Module {
 
             // is there anything in the queue that hasn't been played yet?
             $media_url = $this->get_next_media();
-            if(isset($media_url)) {
+            if(isset($media_url) && strlen($media_url > 0)) {
+               $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "media_url: '${media_url}'");
                $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Next unplayed video sent to caller");
                $response = array(
                   'response' => 'ok',
