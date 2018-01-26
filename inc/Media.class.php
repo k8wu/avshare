@@ -96,6 +96,7 @@ class Media extends Module {
          case 'first-play':
             // is there anything that is playing right now?
             $start_time = $this->time_from_media_start();
+            $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Start time: ${start_time}");
             if(isset($start_time) && $start_time > 0) {
                // see what it is
                $queue = $this->queue_get(true);
@@ -109,17 +110,29 @@ class Media extends Module {
                   break;
                }
             }
-            else {
+
+            // is there anything in the queue that hasn't been played yet?
+            $media_url = $this->get_next_media();
+            if(isset($media_url)) {
+               $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Next unplayed video sent to caller");
                $response = array(
-                  'response' => 'no_video',
-                  'message' => 'Nothing playing right now'
+                  'response' => 'ok',
+                  'media_url' => $media_url
                );
                break;
             }
 
+            // nothing is playing, and nothing is in queue that hasn't been played yet
+            $response = array(
+               'response' => 'no_video',
+               'message' => 'Nothing playing right now'
+            );
+            break;
+
          case 'poll':
             // what is the wait time for the next queue item to play?
             $wait_time = $this->next_play_wait();
+            $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Wait time: ${wait_time}");
             if(isset($wait_time) && $wait_time > 0) {
                $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Not playing any media for ${wait_time} seconds");
                $response = array(
@@ -236,7 +249,7 @@ class Media extends Module {
 
       // see if there are any queue items for this room
       if($first_play) {
-         $query = "SELECT media_url FROM media_queues WHERE room_guid = '${room_guid}' ORDER BY when_added DESC LIMIT 1";
+         $query = "SELECT media_url FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NOT NULL ORDER BY when_played DESC LIMIT 1";
       }
       else {
          $query = "SELECT media_url FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NULL ORDER BY when_added ASC";
@@ -313,7 +326,7 @@ class Media extends Module {
       $room_guid = $this->parameters['room_guid'];
 
       // what, if anything, is next in the queue?
-      $query = "SELECT media_url, when_added FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NULL ORDER BY when_added DESC LIMIT 1";
+      $query = "SELECT media_url, when_added FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NULL ORDER BY when_added ASC LIMIT 1";
       global $db;
       $result = $db->query($query);
 
@@ -344,23 +357,23 @@ class Media extends Module {
       $room_guid = $this->parameters['room_guid'];
 
       // check the database for the latest video that was added
-      $query = "SELECT media_url, when_added, duration FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NOT NULL ORDER BY when_added DESC LIMIT 1";
+      $query = "SELECT when_played, duration FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NOT NULL ORDER BY when_played DESC LIMIT 1";
       global $db;
       $result = $db->query($query);
 
-      // if there are no results, bail
+      // if there are no results, bail (return zero)
       if(!isset($result) || !is_array($result)) {
          $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Nothing found in the queue");
-         return false;
+         return 0;
       }
 
       // do some math to determine whether the media that was found would still be playing
-      $next_play = $result[0]['when_added'] + $result[0]['duration'];
+      $next_play = $result[0]['when_played'] + $result[0]['duration'];
       $wait_time = $next_play - time();
       if($wait_time <= 0) {
          // getting here means that nothing is playing, so we tell the caller to go for it
          $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Nothing is currently playing in this room");
-         return false;
+         return 0;
       }
       else {
          // getting here means that something is playing, so we pass the wait time to the caller
@@ -377,10 +390,10 @@ class Media extends Module {
       $room_guid = $this->parameters['room_guid'];
 
       // check the database for the latest video that might be playing
-      $query = "SELECT media_url, when_played, duration FROM media_queues WHERE room_guid = '${room_guid}' ORDER BY id DESC LIMIT 1";
+      $query = "SELECT media_url, when_played, duration FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NOT NULL ORDER BY when_played DESC LIMIT 1";
       global $db;
       $result = $db->query($query);
-      $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "when_played: {$result[0]['when_played']}");
+      $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "when_played: {$result[0]['when_played']} - current timestamp: " . time());
 
       // if there are no results, then nothing has ever been played here
       if(!isset($result) || !is_array($result)) {
