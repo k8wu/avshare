@@ -187,7 +187,12 @@ class Media extends Module {
          $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "YouTube video URL detected - processing");
 
          // get the video ID
-         $video_id = explode("?v=", $media_url);
+         if(strpos($media_url, 'youtube') > 0) {
+            $video_id = explode("?v=", $media_url);
+         }
+         else if(strpos($media_url, 'youtu.be') > 0) {
+            $video_id = explode("//youtu.be/", $media_url);
+         }
 
          // if we don't have it yet, they're probably in the other format
          if(empty($video_id[1])) {
