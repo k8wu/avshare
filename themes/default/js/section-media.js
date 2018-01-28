@@ -28,7 +28,7 @@ function pollForNextMedia() {
 				startYouTubePlayer('youtube-player');
 
 				// take the item off the queue if it exists
-				if($('#' + response.media_url)) {
+				if($('#' + response.media_guid)) {
 					$('#' + response.media_url).remove();
 				}
 				clearInterval(window.poller);
@@ -49,10 +49,16 @@ function parseExistingQueue() {
 			var response = JSON.parse(data);
 			if(!response.response) {
 				for(var i = 0; i < response.length; i++) {
-					var queue_object = '<div class="in-queue" id="' + response[i].media_url + '">\n';
+					var queue_object = '<div class="in-queue" id="' + response[i].media_guid + '">\n';
 					queue_object += '<img src="' + response[i].image_url + '" />\n';
 					queue_object += '</div>\n';
 					$('.viewport .whats-next').append(queue_object);
+
+					$('#' + response[i].media_guid + '.in-queue').on('mouseover', function() {
+						$(this).append('<i class="delete floated-right fa fa-times"></i>');
+					}).on('mouseout', function() {
+						$(this).find('.delete').remove();
+					});
 				}
 			}
 		}
@@ -95,7 +101,7 @@ $(document).ready(function() {
 					$('.viewport .controls .media-url').css('border', '1px solid #F33');
 				}
 				else {
-					var queue_object = '<div class="in-queue" id="' + response.media_url + '">\n';
+					var queue_object = '<div class="in-queue" id="' + response.media_guid + '">\n';
 					queue_object += '<img src="' + response.image_url + '" />\n';
 					queue_object += '</div>\n';
 					$('.viewport .whats-next').append(queue_object);

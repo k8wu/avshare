@@ -113,14 +113,12 @@ class Media extends Module {
             }
 
             // is there anything in the queue that hasn't been played yet?
-            $media_url = $this->get_next_media();
-            if(isset($media_url) && strlen($media_url > 0)) {
-               $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "media_url: '${media_url}'");
+            $media_info = $this->get_next_media();
+            if(isset($media_info['media_url']) && strlen($media_info['media_url'] > 0)) {
+               $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "media_url: {$media_info['media_url']}");
                $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Next unplayed media object sent to caller");
-               $response = array(
-                  'response' => 'ok',
-                  'media_url' => $media_url
-               );
+               $response = $media_info;
+               $response['response'] = 'ok';
                break;
             }
 
@@ -148,8 +146,8 @@ class Media extends Module {
             // if there is no wait time, just get the next URL and send it to the frontend
             else {
                // but first, check if there is a media URL to send
-               $media_url = $this->get_next_media();
-               if(!isset($media_url) || $media_url === false) {
+               $media_info = $this->get_next_media();
+               if(!isset($media_info['media_url']) || $media_info['media_url'] === false) {
                   $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Not sending any media");
                   $response = array(
                      'response' => 'no_media',
@@ -162,7 +160,8 @@ class Media extends Module {
                   $response = array(
                      'response' => 'ok',
                      'message' => 'Play this media',
-                     'media_url' => $media_url
+                     'media_url' => $media_info['media_url'],
+                     'media_guid' => $media_info['media_guid']
                   );
                   break;
                }
@@ -230,7 +229,8 @@ class Media extends Module {
       // store it in the database
       $user_guid = $_SESSION['user_object']->get_guid();
       $room_guid = $this->parameters['room_guid'];
-      $query = "INSERT INTO media_queues (room_guid, user_guid, media_url, when_added, duration) VALUES ('${room_guid}', '{$user_guid}', '${embed_url}', UNIX_TIMESTAMP(), '${duration}')";
+      $media_guid = Common::get_guid();
+      $query = "INSERT INTO media_queues (room_guid, user_guid, media_guid, media_url, when_added, duration) VALUES ('${room_guid}', '{$user_guid}', '${media_guid}', '${embed_url}', UNIX_TIMESTAMP(), '${duration}')";
       global $db;
       if(!$db->query($query)) {
          $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Failed to add media to queue");
@@ -240,7 +240,8 @@ class Media extends Module {
          // it worked - build an array and return it
          $response = array(
             'media_url' => $embed_url,
-            'image_url' => $image_url
+            'image_url' => $image_url,
+            'media_guid' => $media_guid
          );
          return $response;
       }
@@ -256,10 +257,10 @@ class Media extends Module {
 
       // see if there are any queue items for this room
       if($first_play) {
-         $query = "SELECT media_url FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NOT NULL ORDER BY when_played DESC LIMIT 1";
+         $query = "SELECT media_url, media_guid FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NOT NULL ORDER BY when_played DESC LIMIT 1";
       }
       else {
-         $query = "SELECT media_url FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NULL ORDER BY when_added ASC";
+         $query = "SELECT media_url, media_guid FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NULL ORDER BY when_added ASC";
       }
       global $db;
       $result = $db->query($query);
@@ -279,6 +280,7 @@ class Media extends Module {
          $temp_url .= '/0.jpg';
          $out[$i]['image_url'] = $temp_url;
          $out[$i]['media_url'] = $result[$i]['media_url'];
+         $out[$i]['media_guid'] = $result[$i]['media_guid'];
       }
 
       $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Returning queue to caller");
@@ -333,7 +335,7 @@ class Media extends Module {
       $room_guid = $this->parameters['room_guid'];
 
       // what, if anything, is next in the queue?
-      $query = "SELECT media_url, when_added FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NULL ORDER BY when_added ASC LIMIT 1";
+      $query = "SELECT media_url, media_guid, when_added FROM media_queues WHERE room_guid = '${room_guid}' AND when_played IS NULL ORDER BY when_added ASC LIMIT 1";
       global $db;
       $result = $db->query($query);
 
@@ -347,11 +349,15 @@ class Media extends Module {
       $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Next media object marked as played and returned to the caller");
       $when_added = $result[0]['when_added'];
       $media_url = $result[0]['media_url'];
-      $query = "UPDATE media_queues SET when_played = " . time() . " WHERE room_guid = '${room_guid}' AND media_url = '${media_url}' AND when_added = '${when_added}'";
+      $media_guid = $result[0]['media_guid'];
+      $query = "UPDATE media_queues SET when_played = " . time() . " WHERE room_guid = '${room_guid}' AND media_guid = '${media_guid}' AND when_added = '${when_added}'";
       if(!$db->query($query)) {
          $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database call failure");
       }
-      return $media_url;
+      return array(
+         'media_url' => $media_url,
+         'media_guid' => $media_guid
+      );
    }
 
    // if nothing is playing, this will return false, but if something is playing, then it will return the number of seconds that the caller should wait until playing the next item from the queue
