@@ -107,6 +107,7 @@ class Media extends Module {
                   $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Response: '" . print_r($queue, true) . "'");
                   $response = $queue[0];
                   $response['response'] = 'ok';
+                  $response['room_guid'] = $this->parameters['room_guid'];
                   break;
                }
             }

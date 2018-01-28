@@ -140,14 +140,16 @@ a:visited {
 }
 
 .now-playing {
+	width: 534px;
 	margin: 0;
 	padding: 0;
 }
 
 .now-playing img, .now-playing video {
-	width: 534px;
 	margin: 0;
 	padding: 0;
+	max-width: 100%;
+	max-height: 100%;
 }
 
 .now-playing iframe {
@@ -321,7 +323,7 @@ a:visited {
 .home-page .room-box {
 	background: #456;
 	border: 1px solid white;
-	display: inline-block;
+	display: inline-table;
 	margin: 5px 0 5px 5px;
 	width: 280px;
 	height: 155px;
@@ -345,8 +347,8 @@ a:visited {
 }
 
 .home-page .room-box .now-playing {
-	width: 195px;
-	height: 110px;
+	width: 145px;
+	height: 109px;
 	margin: 5px auto;
 	border: 1px solid white;
 	background: #111;

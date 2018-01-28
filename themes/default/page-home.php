@@ -17,13 +17,14 @@ include $config->get_theme_location() . '/header.php';
 		else {
 			foreach($rooms as $room) {
 				?><a href="/room/<?php echo $room['room_uri']; ?>">
-					<div class="room-box">
+					<div class="room-box" id="<?php echo $room['guid']; ?>">
 						<div class="name"><?php echo $room['room_name']; ?></div>
 						<div class="users">
 							<i class="fa fa-user" aria-hidden="true"></i>
 							<span class="current-users"><?php echo Room::get_users($room['guid'], true); ?></span> / <span class="max-users"><?php echo Room::get_max_users($room['guid']); ?></span>
 						</div>
 						<div class="now-playing">
+							<img />
 						</div>
 					</div>
 				</a><?php
