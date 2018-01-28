@@ -195,6 +195,12 @@ a:visited {
 	width: 165px;
 }
 
+.whats-next .in-queue .delete {
+	position: absolute;
+	top: 0;
+	right: 0;
+}
+
 
 /* for the chat section of the room page */
 

@@ -55,7 +55,7 @@ function parseExistingQueue() {
 					$('.viewport .whats-next').append(queue_object);
 
 					$('#' + response[i].media_guid + '.in-queue').on('mouseover', function() {
-						$(this).append('<i class="delete floated-right fa fa-times"></i>');
+						$(this).append('<i class="delete fa fa-times"></i>');
 					}).on('mouseout', function() {
 						$(this).find('.delete').remove();
 					});
