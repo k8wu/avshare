@@ -55,7 +55,7 @@ function parseExistingQueue() {
 					$('.viewport .whats-next').append(queue_object);
 
 					$('#' + response[i].media_guid + '.in-queue').on('mouseover', function() {
-						$(this).append('<button class="delete"><i class="fa fa-lg fa-times"></i></button>');
+						$(this).append('<button class="button delete"><i class="fa fa-lg fa-times"></i></button>');
 					}).on('mouseout', function() {
 						$(this).find('.delete').remove();
 					});
@@ -106,7 +106,7 @@ $(document).ready(function() {
 					queue_object += '</div>\n';
 					$('.viewport .whats-next').append(queue_object);
 					$('#' + response.media_guid + '.in-queue').on('mouseover', function() {
-						$(this).append('<button class="delete"><i class="fa fa-lg fa-times"></i></button>');
+						$(this).append('<button class="button delete"><i class="fa fa-lg fa-times"></i></button>');
 					}).on('mouseout', function() {
 						$(this).find('.delete').remove();
 					});

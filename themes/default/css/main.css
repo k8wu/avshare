@@ -196,9 +196,12 @@ a:visited {
 	width: 165px;
 }
 
-.whats-next .in-queue .delete {
+.whats-next .in-queue .button {
 	position: absolute;
 	border: 1px solid white;
+	width: 25px;
+	height: 25px;
+	font-size: 0.5em;
 	top: 0;
 	right: 0;
 	margin: 5px;
