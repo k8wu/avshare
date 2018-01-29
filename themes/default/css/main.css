@@ -188,6 +188,7 @@ a:visited {
 .whats-next .in-queue {
 	margin: 0 18px 0 0;
 	float: left;
+	position: relative;
 	border: 1px solid white;
 }
 
@@ -201,6 +202,7 @@ a:visited {
 	top: 0;
 	right: 0;
 	margin: 5px;
+	color: white;
 	background: black;
 }
 
