@@ -29,7 +29,7 @@ function pollForNextMedia() {
 
 				// take the item off the queue if it exists
 				if($('#' + response.media_guid)) {
-					$('#' + response.media_url).remove();
+					$('#' + response.media_guid).remove();
 				}
 				clearInterval(window.poller);
 				window.poller = setInterval(function() {
@@ -55,7 +55,7 @@ function parseExistingQueue() {
 					$('.viewport .whats-next').append(queue_object);
 
 					$('#' + response[i].media_guid + '.in-queue').on('mouseover', function() {
-						$(this).append('<i class="delete fa fa-times"></i>');
+						$(this).append('<i class="delete fa fa-lg fa-times"></i>');
 					}).on('mouseout', function() {
 						$(this).find('.delete').remove();
 					});
@@ -105,6 +105,11 @@ $(document).ready(function() {
 					queue_object += '<img src="' + response.image_url + '" />\n';
 					queue_object += '</div>\n';
 					$('.viewport .whats-next').append(queue_object);
+					$('#' + response.media_guid + '.in-queue').on('mouseover', function() {
+						$(this).append('<i class="delete fa fa-lg fa-times"></i>');
+					}).on('mouseout', function() {
+						$(this).find('.delete').remove();
+					});
 					$('.viewport .controls .media-url').css('border', '1px solid black').val('');
 					$('.viewport .controls .status').text('').addClass('hidden');
 				}
