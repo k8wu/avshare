@@ -104,7 +104,6 @@ class Media extends Module {
                if(isset($queue) && is_array($queue)) {
                   $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "There is something playing here");
                   $queue[0]['media_url'] .= "&start=${start_time}";
-                  $logger->emit($logger::LOGGER_DEBUG, __CLASS__, __FUNCTION__, "Response: '" . print_r($queue, true) . "'");
                   $response = $queue[0];
                   $response['response'] = 'ok';
                   $response['room_guid'] = $this->parameters['room_guid'];
@@ -126,6 +125,34 @@ class Media extends Module {
             $response = array(
                'response' => 'no_media',
                'message' => 'Nothing playing right now'
+            );
+            break;
+
+         case 'queue-remove':
+            // check that we got a media GUID for the object
+            if(!isset($this->parameters['media_guid']) || strlen($this->parameters['media_guid']) == 0) {
+               $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "No media GUID passed");
+               $response = array(
+                  'response' => 'error',
+                  'message' => 'Media GUID not passed'
+               );
+               break;
+            }
+
+            // pass the media GUID to the function that actually handles this
+            if(!$this->queue_remove($this->parameters['media_guid'])) {
+               $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Function call failure");
+               $response = array(
+                  'response' => 'error',
+                  'message' => 'Function call failed'
+               );
+               break;
+            }
+
+            // it worked if we got here
+            $response = array(
+               'response' => 'ok',
+               'message' => 'Media object removed from queue'
             );
             break;
 
@@ -244,6 +271,25 @@ class Media extends Module {
             'media_guid' => $media_guid
          );
          return $response;
+      }
+   }
+
+   function queue_remove($media_guid) {
+      // log that we are here
+      global $logger;
+      $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
+
+      // build the query for the database
+      $room_guid = $this->parameters['room_guid'];
+      $query = "DELETE FROM media_queues WHERE room_guid = '${room_guid}' AND media_guid = '${media_guid}'";
+      global $db;
+      if(!$db->query($query)) {
+         $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "Database call failure (or media GUID did not exist in the database)");
+         return false;
+      }
+      else {
+         $logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Media removed from database");
+         return true;
       }
    }
 

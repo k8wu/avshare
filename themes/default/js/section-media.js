@@ -55,11 +55,52 @@ function parseExistingQueue() {
 					$('.viewport .whats-next').append(queue_object);
 
 					$('#' + response[i].media_guid + '.in-queue').on('mouseenter', function() {
-						$(this).append('<button class="button delete"><i class="fa fa-lg fa-times"></i></button>');
+						if($(this).find('.button').length > 0) {
+							$('.button', this).removeClass('hidden');
+						}
+						else {
+							$(this).append('<button class="button delete"><i class="fa fa-lg fa-times"></i></button>');
+						}
 					}).on('mouseleave', function() {
-						$(this).find('.delete').remove();
+						$(this).find('.delete').addClass('hidden');
+					}).on('click', function(event) {
+						if($(event.target).is('.delete') || $(event.target).is('.fa-times') || $(event.target).is('path')) {
+							event.stopPropagation();
+							buttonHandler($(this).prop('id'));
+						}
 					});
+					//$('#' + response[i].media_guid + '.in-queue .delete').on('click', buttonHandler($(this).prop('id')))
+					// $('#' + response[i].media_guid + ' .in-queue .delete').on('click', function(event) {
+					// 	console.log(event.target);
+					// 	event.stopPropagation();
+					// 	console.log($(this).prop('id'));
+						//buttonHandler(($this).prop('id'));
+					//});
 				}
+			}
+		}
+	});
+}
+
+// delete button handler
+function buttonHandler(media_guid) {
+	console.log('processing media_guid: ' + media_guid);
+	var parameters = {
+		'room_guid':$('.viewport').prop('id'),
+		'media_guid': media_guid
+	}
+	$.post('/media/queue-remove', parameters, function(data) {
+		if(data) {
+			var response = JSON.parse(data);
+			console.log(response);
+			if(response.response != 'ok') {
+				$('.viewport .controls .status').text('Error: ' + response.message).removeClass('hidden');
+				$('.viewport .controls .media-url').css('border', '1px solid #F33');
+			}
+			else {
+				$('#' + media_guid).remove();
+				$('.viewport .controls .media-url').css('border', '1px solid black').val('');
+				$('.viewport .controls .status').text('').addClass('hidden');
 			}
 		}
 	});
@@ -106,9 +147,19 @@ $(document).ready(function() {
 					queue_object += '</div>\n';
 					$('.viewport .whats-next').append(queue_object);
 					$('#' + response.media_guid + '.in-queue').on('mouseenter', function() {
-						$(this).append('<button class="button delete"><i class="fa fa-lg fa-times"></i></button>');
+						if($(this).find('.button').length > 0) {
+							$('.button', this).removeClass('hidden');
+						}
+						else {
+							$(this).append('<button class="button delete"><i class="fa fa-lg fa-times"></i></button>');
+						}
 					}).on('mouseleave', function() {
-						$(this).find('.delete').remove();
+						$(this).find('.delete').addClass('hidden');
+					}).on('click', function(event) {
+						if($(event.target).is('.delete') || $(event.target).is('.fa-times') || $(event.target).is('path')) {
+							event.stopPropagation();
+							buttonHandler($(this).prop('id'));
+						}
 					});
 					$('.viewport .controls .media-url').css('border', '1px solid black').val('');
 					$('.viewport .controls .status').text('').addClass('hidden');
