@@ -128,7 +128,33 @@ class Media extends Module {
             );
             break;
 
+         case 'queue-can-admin':
+            // pick up the user GUID from the current object
+            $user_guid = $_SESSION['user_object']->get_guid();
+
+            // the result is based on active user object in the session
+            $can_admin = Room::user_can_admin($this->parameters['room_guid'], $user_guid);
+
+            // formulate the response to the caller
+            $response = array(
+               'response' => ($can_admin ? 'ok' : 'error'),
+               'message' => 'User may ' . ($can_admin ? 'administer' : 'not administer') . ' the queue',
+               'media_guid' => (isset($this->parameters['media_guid']) ? $this->parameters['media_guid'] : false)
+            );
+            break;
+
          case 'queue-remove':
+            // if user is not admin, no way can this happen
+            $user_guid = $_SESSION['user_object']->get_guid();
+            if(!Room::user_can_admin($this->parameters['room_guid'], $user_guid)) {
+               $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "User is not a room or site admin - cannot delete queue objects");
+               $response = array(
+                  'response' => 'error',
+                  'message' => 'User does not have moderator or administrator privileges'
+               );
+               break;
+            }
+
             // check that we got a media GUID for the object
             if(!isset($this->parameters['media_guid']) || strlen($this->parameters['media_guid']) == 0) {
                $logger->emit($logger::LOGGER_WARN, __CLASS__, __FUNCTION__, "No media GUID passed");

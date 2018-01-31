@@ -54,28 +54,33 @@ function parseExistingQueue() {
 					queue_object += '</div>\n';
 					$('.viewport .whats-next').append(queue_object);
 
-					$('#' + response[i].media_guid + '.in-queue').on('mouseenter', function() {
-						if($(this).find('.button').length > 0) {
-							$('.button', this).removeClass('hidden');
-						}
-						else {
-							$(this).append('<button class="button delete"><i class="fa fa-lg fa-times"></i></button>');
-						}
-					}).on('mouseleave', function() {
-						$(this).find('.delete').addClass('hidden');
-					}).on('click', function(event) {
-						if($(event.target).is('.delete') || $(event.target).is('.fa-times') || $(event.target).is('path')) {
-							event.stopPropagation();
-							buttonHandler($(this).prop('id'));
+					// this only applies if the user has admin/moderator privileges
+					var parameters = {
+						'room_guid': $('.viewport').prop('id'),
+						'media_guid': response[i].media_guid
+					}
+					$.post('/media/queue-can-admin', parameters, function(this_data) {
+						if(this_data) {
+							var response = JSON.parse(this_data);
+							if(response.response == 'ok') {
+								$('#' + response.media_guid + '.in-queue').on('mouseenter', function() {
+									if($(this).find('.button').length > 0) {
+										$('.button', this).removeClass('hidden');
+									}
+									else {
+										$(this).append('<button class="button delete"><i class="fa fa-lg fa-times"></i></button>');
+									}
+								}).on('mouseleave', function() {
+									$(this).find('.delete').addClass('hidden');
+								}).on('click', function(event) {
+									if($(event.target).is('.delete') || $(event.target).is('.fa-times') || $(event.target).is('path')) {
+										event.stopPropagation();
+										buttonHandler($(this).prop('id'));
+									}
+								});
+							}
 						}
 					});
-					//$('#' + response[i].media_guid + '.in-queue .delete').on('click', buttonHandler($(this).prop('id')))
-					// $('#' + response[i].media_guid + ' .in-queue .delete').on('click', function(event) {
-					// 	console.log(event.target);
-					// 	event.stopPropagation();
-					// 	console.log($(this).prop('id'));
-						//buttonHandler(($this).prop('id'));
-					//});
 				}
 			}
 		}
@@ -146,21 +151,34 @@ $(document).ready(function() {
 					queue_object += '<img src="' + response.image_url + '" />\n';
 					queue_object += '</div>\n';
 					$('.viewport .whats-next').append(queue_object);
-					$('#' + response.media_guid + '.in-queue').on('mouseenter', function() {
-						if($(this).find('.button').length > 0) {
-							$('.button', this).removeClass('hidden');
-						}
-						else {
-							$(this).append('<button class="button delete"><i class="fa fa-lg fa-times"></i></button>');
-						}
-					}).on('mouseleave', function() {
-						$(this).find('.delete').addClass('hidden');
-					}).on('click', function(event) {
-						if($(event.target).is('.delete') || $(event.target).is('.fa-times') || $(event.target).is('path')) {
-							event.stopPropagation();
-							buttonHandler($(this).prop('id'));
+
+					// this only applies if the user has admin/moderator privileges
+					var parameters = {
+						'room_guid': $('.viewport').prop('id')
+					}
+					$.post('/media/queue-can-admin', parameters, function(this_data) {
+						if(this_data) {
+							var this_response = JSON.parse(this_data);
+							if(this_response.response == 'ok') {
+								$('#' + response.media_guid + '.in-queue').on('mouseenter', function() {
+									if($(this).find('.button').length > 0) {
+										$('.button', this).removeClass('hidden');
+									}
+									else {
+										$(this).append('<button class="button delete"><i class="fa fa-lg fa-times"></i></button>');
+									}
+								}).on('mouseleave', function() {
+									$(this).find('.delete').addClass('hidden');
+								}).on('click', function(event) {
+									if($(event.target).is('.delete') || $(event.target).is('.fa-times') || $(event.target).is('path')) {
+										event.stopPropagation();
+										buttonHandler($(this).prop('id'));
+									}
+								});
+							}
 						}
 					});
+
 					$('.viewport .controls .media-url').css('border', '1px solid black').val('');
 					$('.viewport .controls .status').text('').addClass('hidden');
 				}

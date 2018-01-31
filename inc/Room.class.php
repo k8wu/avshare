@@ -630,4 +630,31 @@ class Room extends Module {
 			}
 		}
 	}
+
+	static function user_can_admin($user_guid, $room_guid) {
+		// log the function call
+		global $logger;
+		$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "Function called");
+
+		// if the user is a global admin, then they're a moderator in all rooms
+		if($_SESSION['user_object']->is_admin()) {
+			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "User is global admin");
+			return true;
+		}
+
+		// if the user is explicitly listed as being a moderator in the given room, that works, too
+		$query = "SELECT user_level FROM users_in_rooms WHERE room_guid = '${room_guid}' AND user_guid = '${user_guid}' LIMIT 1";
+		global $db;
+		$result = $db->query($query);
+		if(isset($result[0]['user_level']) && $result[0]['user_level'] > $this::USER_LEVEL_NORMAL) {
+			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "User is room admin/moderator");
+			return true;
+		}
+
+		// otherwise, no
+		else {
+			$logger->emit($logger::LOGGER_INFO, __CLASS__, __FUNCTION__, "User is not an admin or moderator");
+			return false;
+		}
+	}
 }
