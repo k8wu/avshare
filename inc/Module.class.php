@@ -50,7 +50,7 @@ abstract class Module {
 		$is_core = ($is_core === true ? '1' : '0');
 
 		// build the query and execute it
-		$query = "INSERT INTO modules (name, core) VALUES ('{$this->name}', '${is_core}'";
+		$query = "INSERT INTO modules (name, core) VALUES ('{$this->name}', '${is_core}')";
 		global $db;
 		$result = $db->query($query);
 		if(!isset($result) || !is_array($result)) {
